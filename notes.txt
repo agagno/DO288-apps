@@ -1,0 +1,1222 @@
+[student@workstation ~]$ lab-configure
+
+This script configures the connection parameters to access the OpenShift cluster for your lab scripts
+
+ · Enter the API Endpoint: https://api.na45.prod.nextcle.com:6443
+ · Enter the Username: bsctlf
+ · Enter the Password: df6123965a504764b13a
+ · Enter the GitHub Account Name: agagno
+ · Enter the Quay.io Account Name: agagno
+
+You entered:
+ · API Endpoint:			https://api.na45.prod.nextcle.com:6443
+ · Username:				bsctlf
+ · Password:				df6123965a504764b13a
+ · GitHub Account Name:			agagno
+ · Quay.io Account Name:		agagno
+
+Generated config:
+ · API Endpoint:			https://api.na45.prod.nextcle.com:6443
+ · Wildcard Domain:			apps.na45.prod.nextcle.com
+ · Nexus Server Host:			nexus-common.apps.na45.prod.nextcle.com
+ · Username:				bsctlf
+ · Password:				df6123965a504764b13a
+ · GitHub Account Name:			agagno
+ · Quay.io Account Name:		agagno
+
+Verifying your API Endpoint...
+
+Verifying your Nexus host...
+
+Verifying your OpenShift developer user credentials...
+
+Verifying your GitHub account name...
+
+Verifying your Quay.io account name...
+
+Verifying your cluster configuration...
+
+Saving your lab configuration file...
+
+Saving your Maven settings file...
+
+All fine, lab config saved. You can now proceed with your exercises.
+
+If you need to modify the configuration, rerun this script or directly modify the values in /usr/local/etc/ocp4.config.
+
+[student@workstation ~]$ cat /usr/local/etc/ocp4.config
+RHT_OCP4_MASTER_API=https://api.na45.prod.nextcle.com:6443
+RHT_OCP4_WILDCARD_DOMAIN=apps.na45.prod.nextcle.com
+RHT_OCP4_NEXUS_SERVER=nexus-common.apps.na45.prod.nextcle.com
+RHT_OCP4_DEV_USER=bsctlf
+RHT_OCP4_DEV_PASSWORD=df6123965a504764b13a
+RHT_OCP4_GITHUB_USER=agagno
+RHT_OCP4_QUAY_USER=agagno
+[student@workstation ~]$ git clone https://github.com/agagno/DO288-apps
+Cloning into 'DO288-apps'...
+remote: Enumerating objects: 1057, done.
+remote: Total 1057 (delta 0), reused 0 (delta 0), pack-reused 1057
+Receiving objects: 100% (1057/1057), 1.13 MiB | 0 bytes/s, done.
+Resolving deltas: 100% (260/260), done.
+[student@workstation ~]$ 
+[student@workstation ~]$ 
+[student@workstation ~]$ git status
+fatal: Not a git repository (or any of the parent directories): .git
+[student@workstation ~]$ cd DO288-apps/
+[student@workstation DO288-apps]$ git status
+# On branch master
+nothing to commit, working directory clean
+[student@workstation DO288-apps]$ head README.md 
+# DO288 Containerized Example Applications
+
+This repository contains a collection of sample containerized applications.  To complete the course you need to fork this repo into your personal Github account.[student@workstation DO288-apps]$ 
+[student@workstation DO288-apps]$ 
+[student@workstation DO288-apps]$ lab review-dockerfile start
+
+Checking prerequisites for Lab: Designing a Container Image for OpenShift
+
+ Checking local clone of the applications repository:
+ · Folder '/home/student/DO288-apps' is a git repo.............  SUCCESS
+ · Git repo '/home/student/DO288-apps' has no pending changes..  SUCCESS
+ Verifying the OpenShift cluster is running:
+ · Log in on OpenShift.........................................  SUCCESS
+ · Check master node na45-45xr9-master-0 is ready..............  SUCCESS
+ · Check master node na45-45xr9-master-1 is ready..............  SUCCESS
+ · Check master node na45-45xr9-master-2 is ready..............  SUCCESS
+ · Check the internal registry is up and running...............  SUCCESS
+ Checking required artifacts:
+ · Project 'todo-frontend' exists in student's GitHub fork.....  SUCCESS
+ Checking for conflicts with existing OpenShift projects:
+ · Project 'bsctlf-review-common' is absent....................  SUCCESS
+ · Project 'bsctlf-review-dockerfile' is absent................  SUCCESS
+
+Setting up the classroom for Lab: Designing a Container Image for OpenShift
+
+ · Download exercise files.....................................  SUCCESS
+ · Download solution files.....................................  SUCCESS
+
+Overall start status...........................................  SUCCESS
+
+[student@workstation DO288-apps]$ git checkout master
+Already on 'master'
+[student@workstation DO288-apps]$ git checkout -b review-dockerfile
+Switched to a new branch 'review-dockerfile'
+[student@workstation DO288-apps]$ git push -u origin review-dockerfile
+Username for 'https://github.com': agagno
+Password for 'https://agagno@github.com': 
+Total 0 (delta 0), reused 0 (delta 0)
+remote: 
+remote: Create a pull request for 'review-dockerfile' on GitHub by visiting:
+remote:      https://github.com/agagno/DO288-apps/pull/new/review-dockerfile
+remote: 
+To https://github.com/agagno/DO288-apps
+ * [new branch]      review-dockerfile -> review-dockerfile
+Branch review-dockerfile set up to track remote branch review-dockerfile from origin.
+[student@workstation DO288-apps]$ cd todo-frontend/
+[student@workstation todo-frontend]$ ls -l
+total 8
+-rw-rw-r--. 1 student student  567 Jun  1 20:42 Dockerfile
+-rw-rw-r--. 1 student student 1750 Jun  1 20:42 nginx.conf
+drwxrwxr-x. 5 student student   78 Jun  1 20:42 src
+[student@workstation todo-frontend]$ cat Dockerfile
+FROM registry.access.redhat.com/ubi8:8.0
+
+LABEL version="1.0"
+LABEL description="To Do List application front-end"
+LABEL creationDate="2017-12-25"
+LABEL updatedDate="2019-08-01"
+
+ENV BACKEND_HOST=localhost:8081
+
+RUN yum install -y --disableplugin=subscription-manager --nodocs \
+  nginx nginx-mod-http-perl
+RUN yum clean all
+
+COPY nginx.conf /etc/nginx/
+
+RUN touch /run/nginx.pid
+RUN chgrp -R nginx /var/log/nginx /run/nginx.pid
+RUN chmod -R g+rwx /var/log/nginx /run/nginx.pid
+  
+COPY src/ /usr/share/nginx/html
+
+EXPOSE 8080
+
+USER nginx
+
+CMD nginx -g "daemon off;"
+
+[student@workstation todo-frontend]$ ls -l
+total 8
+-rw-rw-r--. 1 student student  567 Jun  1 20:42 Dockerfile
+-rw-rw-r--. 1 student student 1750 Jun  1 20:42 nginx.conf
+drwxrwxr-x. 5 student student   78 Jun  1 20:42 src
+[student@workstation todo-frontend]$ cat nginx.conf 
+# For more information on configuration, see:
+#   * Official English Documentation: http://nginx.org/en/docs/
+#   * Official Russian Documentation: http://nginx.org/ru/docs/
+
+env BACKEND_HOST;
+
+worker_processes auto;
+error_log stderr;
+pid /run/nginx.pid;
+
+# Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
+include /usr/share/nginx/modules/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    sendfile            on;
+    tcp_nopush          on;
+    tcp_nodelay         on;
+    keepalive_timeout   65;
+    types_hash_max_size 2048;
+
+    include             /etc/nginx/mime.types;
+    default_type        application/octet-stream;
+
+    # Load modular configuration files from the /etc/nginx/conf.d directory.
+    # See http://nginx.org/en/docs/ngx_core_module.html#include
+    # for more information.
+    include /etc/nginx/conf.d/*.conf;
+
+    perl_set $backend 'sub { return $ENV{"BACKEND_HOST"}; }';
+
+    server {
+        listen       8080 default_server;
+        listen       [::]:8080 default_server;
+        server_name  _;
+        root         /usr/share/nginx/html;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        sub_filter_types application/javascript;
+        sub_filter '_BACKEND_' $backend;
+        sub_filter_once off;
+
+        location / {
+        }
+
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
+    }
+
+}
+[student@workstation todo-frontend]$ vi Dockerfile 
+[student@workstation todo-frontend]$ sudo podman build -t front-end .
+STEP 1: FROM registry.access.redhat.com/ubi8:8.0
+Getting image source signatures
+Copying blob sha256:c65691897a4d140d441e2024ce086de996b1c4620832b90c973db81329577274
+ 67.74 MB / ? [-------=----------------------------------------------------] 3s 
+Copying blob sha256:641d7cc5cbc48a13c68806cf25d5bcf76ea2157c3181e1db4f5d0edae34954ac
+ 1.48 KB / ? [-----------------------------=-------------------------------] 0s 
+Copying config sha256:11f9dba4d1bc7bbead64adb8fd73ea92dca5fac88a9b5c2c9796abcf2e97846d
+ 4.43 KB / 4.43 KB [========================================================] 0s
+Writing manifest to image destination
+Storing signatures
+STEP 2: LABEL version="1.0"     description="To Do List application front-end"     creationDate="2017-12-25"     updatedDate="2019-08-01"
+ERRO[0008] HOSTNAME is not supported for OCI image format, hostname a3a96c4a2d45 will be ignored. Must use `docker` format 
+--> c53c501066c0d3c9064fb8c4c56340093350d69668394a0aef41df657772b9b5
+STEP 3: FROM c53c501066c0d3c9064fb8c4c56340093350d69668394a0aef41df657772b9b5
+STEP 4: ENV BACKEND_HOST=localhost:8081
+--> fd07aca9a98b61c1234ca4cff223439f83902bdd0c673c4041fc76e2d47a264a
+STEP 5: FROM fd07aca9a98b61c1234ca4cff223439f83902bdd0c673c4041fc76e2d47a264a
+STEP 6: RUN yum install -y --disableplugin=subscription-manager --nodocs   nginx nginx-mod-http-perl && yum clean all
+Red Hat Universal Base Image 8 (RPMs) - AppStre 6.6 MB/s | 7.4 MB     00:01    
+Red Hat Universal Base Image 8 (RPMs) - BaseOS  9.6 MB/s | 786 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package                       ArchVersion                                 Repository      Size
+================================================================================
+Installing:
+ nginx                         x86_641:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 570 k
+ nginx-mod-http-perl           x86_641:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 46 k
+Upgrading:
+ openssl-libs                  x86_641:1.1.1g-15.el8_3                       ubi-8-baseos    1.5 M
+Installing dependencies:
+ jbigkit-libs                  x86_642.1-14.el8                              ubi-8-appstream 55 k
+ libwebp                       x86_641.0.0-1.el8                             ubi-8-appstream 273 k
+ nginx-all-modules             noarch1:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 24 k
+ nginx-mod-stream              x86_641:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 85 k
+ perl-Digest                   noarch1.17-395.el8                            ubi-8-appstream 27 k
+ nginx-mod-http-image-filter   x86_641:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 35 k
+ perl-URI                      noarch1.73-3.el8                              ubi-8-appstream 116 k
+ nginx-mod-http-xslt-filter    x86_641:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 34 k
+ libjpeg-turbo                 x86_641.5.3-10.el8                            ubi-8-appstream 156 k
+ perl-Digest-MD5               x86_642.55-396.el8                            ubi-8-appstream 37 k
+ nginx-filesystem              noarch1:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 24 k
+ perl-libnet                   noarch3.11-3.el8                              ubi-8-appstream 121 k
+ nginx-mod-mail                x86_641:1.14.1-9.module+el8.0.0+4108+af250afe ubi-8-appstream 64 k
+ libX11                        x86_641.6.8-4.el8                             ubi-8-appstream 611 k
+ libtiff                       x86_644.0.9-18.el8                            ubi-8-appstream 188 k
+ libXpm                        x86_643.5.12-8.el8                            ubi-8-appstream 58 k
+ libXau                        x86_641.0.9-3.el8                             ubi-8-appstream 37 k
+ libX11-common                 noarch1.6.8-4.el8                             ubi-8-appstream 158 k
+ gd                            x86_642.2.5-7.el8                             ubi-8-appstream 144 k
+ perl-Net-SSLeay               x86_641.88-1.module+el8.3.0+6446+594cad75     ubi-8-appstream 379 k
+ libxcb                        x86_641.13.1-1.el8                            ubi-8-appstream 229 k
+ fontpackages-filesystem       noarch1.44-22.el8                             ubi-8-baseos    16 k
+ perl-Scalar-List-Utils        x86_643:1.49-2.el8                            ubi-8-baseos    68 k
+ perl-PathTools                x86_643.74-1.el8                              ubi-8-baseos    90 k
+ perl-threads                  x86_641:2.21-2.el8                            ubi-8-baseos    61 k
+ perl-Pod-Simple               noarch1:3.35-395.el8                          ubi-8-baseos    213 k
+ perl-Term-ANSIColor           noarch4.06-396.el8                            ubi-8-baseos    46 k
+ perl-Data-Dumper              x86_642.167-399.el8                           ubi-8-baseos    58 k
+ perl-macros                   x86_644:5.26.3-419.el8                        ubi-8-baseos    72 k
+ perl-libs                     x86_644:5.26.3-419.el8                        ubi-8-baseos    1.6 M
+ perl-Errno                    x86_641.28-419.el8                            ubi-8-baseos    76 k
+ perl-threads-shared           x86_641.58-2.el8                              ubi-8-baseos    48 k
+ perl-HTTP-Tiny                noarch0.074-1.el8                             ubi-8-baseos    58 k
+ perl-Pod-Escapes              noarch1:1.07-395.el8                          ubi-8-baseos    20 k
+ perl-IO                       x86_641.38-419.el8                            ubi-8-baseos    142 k
+ perl-Pod-Perldoc              noarch3.28-396.el8                            ubi-8-baseos    88 k
+ perl-Encode                   x86_644:2.97-3.el8                            ubi-8-baseos    1.5 M
+ perl-Socket                   x86_644:2.027-3.el8                           ubi-8-baseos    59 k
+ perl-File-Path                noarch2.15-2.el8                              ubi-8-baseos    38 k
+ perl-parent                   noarch1:0.237-1.el8                           ubi-8-baseos    20 k
+ libpng                        x86_642:1.6.34-5.el8                          ubi-8-baseos    126 k
+ dejavu-fonts-common           noarch2.35-7.el8                              ubi-8-baseos    74 k
+ perl-interpreter              x86_644:5.26.3-419.el8                        ubi-8-baseos    6.3 M
+ perl-Text-Tabs+Wrap           noarch2013.0523-395.el8                       ubi-8-baseos    24 k
+ groff-base                    x86_641.22.3-18.el8                           ubi-8-baseos    1.0 M
+ perl-Getopt-Long              noarch1:2.50-4.el8                            ubi-8-baseos    63 k
+ libxslt                       x86_641.1.32-6.el8                            ubi-8-baseos    250 k
+ freetype                      x86_642.9.1-4.el8_3.1                         ubi-8-baseos    394 k
+ perl-podlators                noarch4.11-1.el8                              ubi-8-baseos    118 k
+ perl-Time-Local               noarch1:1.280-1.el8                           ubi-8-baseos    34 k
+ perl-Carp                     noarch1.42-396.el8                            ubi-8-baseos    30 k
+ perl-Exporter                 noarch5.72-396.el8                            ubi-8-baseos    34 k
+ perl-Storable                 x86_641:3.11-3.el8                            ubi-8-baseos    98 k
+ perl-Text-ParseWords          noarch3.30-395.el8                            ubi-8-baseos    18 k
+ fontconfig                    x86_642.13.1-3.el8                            ubi-8-baseos    275 k
+ perl-Unicode-Normalize        x86_641.25-396.el8                            ubi-8-baseos    82 k
+ ncurses                       x86_646.1-7.20180224.el8                      ubi-8-baseos    387 k
+ openssl                       x86_641:1.1.1g-15.el8_3                       ubi-8-baseos    707 k
+ perl-File-Temp                noarch0.230.600-1.el8                         ubi-8-baseos    63 k
+ perl-constant                 noarch1.33-396.el8                            ubi-8-baseos    25 k
+ perl-Term-Cap                 noarch1.17-395.el8                            ubi-8-baseos    23 k
+ perl-MIME-Base64              x86_643.15-396.el8                            ubi-8-baseos    31 k
+ dejavu-sans-fonts             noarch2.35-7.el8                              ubi-8-baseos    1.5 M
+ perl-Pod-Usage                noarch4:1.69-395.el8                          ubi-8-baseos    34 k
+Installing weak dependencies:
+ perl-IO-Socket-IP             noarch0.39-5.el8                              ubi-8-appstream 47 k
+ perl-IO-Socket-SSL            noarch2.066-4.module+el8.3.0+6446+594cad75    ubi-8-appstream 298 k
+ perl-Mozilla-CA               noarch20160104-7.module+el8.3.0+6498+9eecfe51 ubi-8-appstream 15 k
+ openssl-pkcs11                x86_640.4.10-2.el8                            ubi-8-baseos    66 k
+Enabling module streams:
+ nginx                         1.14                                                    
+ perl-IO-Socket-SSL            2.066                                                   
+ perl-libwww-perl              6.34                                                    
+
+Transaction Summary
+================================================================================
+Install  70 Packages
+Upgrade   1 Package
+
+Total download size: 21 M
+Downloading Packages:
+(1/71): jbigkit-libs-2.1-14.el8.x86_64.rpm       53 kB/s |  55 kB     00:01    
+(2/71): nginx-all-modules-1.14.1-9.module+el8.0 1.4 MB/s |  24 kB     00:00    
+(3/71): nginx-1.14.1-9.module+el8.0.0+4108+af25 535 kB/s | 570 kB     00:01    
+(4/71): nginx-mod-stream-1.14.1-9.module+el8.0. 5.3 MB/s |  85 kB     00:00    
+(5/71): libwebp-1.0.0-1.el8.x86_64.rpm          254 kB/s | 273 kB     00:01    
+(6/71): nginx-mod-http-image-filter-1.14.1-9.mo 1.5 MB/s |  35 kB     00:00    
+(7/71): perl-URI-1.73-3.el8.noarch.rpm          3.8 MB/s | 116 kB     00:00    
+(8/71): nginx-mod-http-xslt-filter-1.14.1-9.mod 1.8 MB/s |  34 kB     00:00    
+(9/71): perl-Digest-1.17-395.el8.noarch.rpm     550 kB/s |  27 kB     00:00    
+(10/71): libjpeg-turbo-1.5.3-10.el8.x86_64.rpm  9.7 MB/s | 156 kB     00:00    
+(11/71): nginx-mod-http-perl-1.14.1-9.module+el 1.4 MB/s |  46 kB     00:00    
+(12/71): perl-Digest-MD5-2.55-396.el8.x86_64.rp 1.2 MB/s |  37 kB     00:00    
+(13/71): perl-IO-Socket-IP-0.39-5.el8.noarch.rp 939 kB/s |  47 kB     00:00    
+(14/71): perl-libnet-3.11-3.el8.noarch.rpm      4.1 MB/s | 121 kB     00:00    
+(15/71): nginx-mod-mail-1.14.1-9.module+el8.0.0 2.7 MB/s |  64 kB     00:00    
+(16/71): libX11-1.6.8-4.el8.x86_64.rpm           58 MB/s | 611 kB     00:00    
+(17/71): libtiff-4.0.9-18.el8.x86_64.rpm         24 MB/s | 188 kB     00:00    
+(18/71): libXau-1.0.9-3.el8.x86_64.rpm          4.8 MB/s |  37 kB     00:00    
+(19/71): libXpm-3.5.12-8.el8.x86_64.rpm         3.1 MB/s |  58 kB     00:00    
+(20/71): perl-IO-Socket-SSL-2.066-4.module+el8.  14 MB/s | 298 kB     00:00    
+(21/71): libX11-common-1.6.8-4.el8.noarch.rpm   7.2 MB/s | 158 kB     00:00    
+(22/71): perl-Mozilla-CA-20160104-7.module+el8. 1.1 MB/s |  15 kB     00:00    
+(23/71): nginx-filesystem-1.14.1-9.module+el8.0 225 kB/s |  24 kB     00:00    
+(24/71): gd-2.2.5-7.el8.x86_64.rpm               11 MB/s | 144 kB     00:00    
+(25/71): libxcb-1.13.1-1.el8.x86_64.rpm          18 MB/s | 229 kB     00:00    
+(26/71): fontpackages-filesystem-1.44-22.el8.no 1.3 MB/s |  16 kB     00:00    
+(27/71): perl-Net-SSLeay-1.88-1.module+el8.3.0+  14 MB/s | 379 kB     00:00    
+(28/71): perl-Scalar-List-Utils-1.49-2.el8.x86_ 3.4 MB/s |  68 kB     00:00    
+(29/71): perl-threads-2.21-2.el8.x86_64.rpm     3.3 MB/s |  61 kB     00:00    
+(30/71): perl-PathTools-3.74-1.el8.x86_64.rpm   2.8 MB/s |  90 kB     00:00    
+(31/71): perl-Term-ANSIColor-4.06-396.el8.noarc 2.7 MB/s |  46 kB     00:00    
+(32/71): perl-Pod-Simple-3.35-395.el8.noarch.rp 5.8 MB/s | 213 kB     00:00    
+(33/71): perl-macros-5.26.3-419.el8.x86_64.rpm  3.4 MB/s |  72 kB     00:00    
+(34/71): perl-Data-Dumper-2.167-399.el8.x86_64. 1.8 MB/s |  58 kB     00:00    
+(35/71): perl-threads-shared-1.58-2.el8.x86_64. 6.3 MB/s |  48 kB     00:00    
+(36/71): perl-Errno-1.28-419.el8.x86_64.rpm     7.5 MB/s |  76 kB     00:00    
+(37/71): perl-libs-5.26.3-419.el8.x86_64.rpm     49 MB/s | 1.6 MB     00:00    
+(38/71): perl-Pod-Escapes-1.07-395.el8.noarch.r 1.5 MB/s |  20 kB     00:00    
+(39/71): perl-HTTP-Tiny-0.074-1.el8.noarch.rpm  2.2 MB/s |  58 kB     00:00    
+(40/71): perl-IO-1.38-419.el8.x86_64.rpm        6.3 MB/s | 142 kB     00:00    
+(41/71): perl-Pod-Perldoc-3.28-396.el8.noarch.r 3.8 MB/s |  88 kB     00:00    
+(42/71): perl-File-Path-2.15-2.el8.noarch.rpm   4.2 MB/s |  38 kB     00:00    
+(43/71): perl-Socket-2.027-3.el8.x86_64.rpm     5.0 MB/s |  59 kB     00:00    
+(44/71): perl-Encode-2.97-3.el8.x86_64.rpm       41 MB/s | 1.5 MB     00:00    
+(45/71): perl-parent-0.237-1.el8.noarch.rpm     1.2 MB/s |  20 kB     00:00    
+(46/71): libpng-1.6.34-5.el8.x86_64.rpm         6.7 MB/s | 126 kB     00:00    
+(47/71): dejavu-fonts-common-2.35-7.el8.noarch. 7.0 MB/s |  74 kB     00:00    
+(48/71): perl-Text-Tabs+Wrap-2013.0523-395.el8. 3.0 MB/s |  24 kB     00:00    
+(49/71): perl-Getopt-Long-2.50-4.el8.noarch.rpm 8.9 MB/s |  63 kB     00:00    
+(50/71): libxslt-1.1.32-6.el8.x86_64.rpm         12 MB/s | 250 kB     00:00    
+(51/71): freetype-2.9.1-4.el8_3.1.x86_64.rpm     51 MB/s | 394 kB     00:00    
+(52/71): perl-podlators-4.11-1.el8.noarch.rpm   6.0 MB/s | 118 kB     00:00    
+(53/71): openssl-pkcs11-0.4.10-2.el8.x86_64.rpm 4.8 MB/s |  66 kB     00:00    
+(54/71): groff-base-1.22.3-18.el8.x86_64.rpm     12 MB/s | 1.0 MB     00:00    
+(55/71): perl-Time-Local-1.280-1.el8.noarch.rpm 1.2 MB/s |  34 kB     00:00    
+(56/71): perl-Carp-1.42-396.el8.noarch.rpm      1.3 MB/s |  30 kB     00:00    
+(57/71): perl-Exporter-5.72-396.el8.noarch.rpm  543 kB/s |  34 kB     00:00    
+(58/71): perl-Text-ParseWords-3.30-395.el8.noar 590 kB/s |  18 kB     00:00    
+(59/71): perl-Storable-3.11-3.el8.x86_64.rpm    1.2 MB/s |  98 kB     00:00    
+(60/71): fontconfig-2.13.1-3.el8.x86_64.rpm      16 MB/s | 275 kB     00:00    
+(61/71): perl-Unicode-Normalize-1.25-396.el8.x8 4.1 MB/s |  82 kB     00:00    
+(62/71): ncurses-6.1-7.20180224.el8.x86_64.rpm   25 MB/s | 387 kB     00:00    
+(63/71): openssl-1.1.1g-15.el8_3.x86_64.rpm      29 MB/s | 707 kB     00:00    
+(64/71): perl-interpreter-5.26.3-419.el8.x86_64  23 MB/s | 6.3 MB     00:00    
+(65/71): perl-File-Temp-0.230.600-1.el8.noarch. 1.5 MB/s |  63 kB     00:00    
+(66/71): perl-constant-1.33-396.el8.noarch.rpm  875 kB/s |  25 kB     00:00    
+(67/71): perl-MIME-Base64-3.15-396.el8.x86_64.r 3.6 MB/s |  31 kB     00:00    
+(68/71): perl-Term-Cap-1.17-395.el8.noarch.rpm  2.3 MB/s |  23 kB     00:00    
+(69/71): dejavu-sans-fonts-2.35-7.el8.noarch.rp  79 MB/s | 1.5 MB     00:00    
+(70/71): openssl-libs-1.1.1g-15.el8_3.x86_64.rp  43 MB/s | 1.5 MB     00:00    
+(71/71): perl-Pod-Usage-1.69-395.el8.noarch.rpm 974 kB/s |  34 kB     00:00    
+--------------------------------------------------------------------------------
+Total                                            12 MB/s |  21 MB     00:01     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : libpng-2:1.6.34-5.el8.x86_64                          1/72 
+  Installing       : freetype-2.9.1-4.el8_3.1.x86_64                       2/72 
+  Installing       : fontpackages-filesystem-1.44-22.el8.noarch            3/72 
+  Installing       : libjpeg-turbo-1.5.3-10.el8.x86_64                     4/72 
+  Installing       : dejavu-fonts-common-2.35-7.el8.noarch                 5/72 
+  Installing       : dejavu-sans-fonts-2.35-7.el8.noarch                   6/72 
+  Installing       : fontconfig-2.13.1-3.el8.x86_64                        7/72 
+  Running scriptlet: fontconfig-2.13.1-3.el8.x86_64                        7/72 
+  Installing       : openssl-1:1.1.1g-15.el8_3.x86_64                      8/72 
+  Upgrading        : openssl-libs-1:1.1.1g-15.el8_3.x86_64                 9/72 
+  Running scriptlet: openssl-libs-1:1.1.1g-15.el8_3.x86_64                 9/72 
+  Installing       : openssl-pkcs11-0.4.10-2.el8.x86_64                   10/72 
+  Installing       : ncurses-6.1-7.20180224.el8.x86_64                    11/72 
+  Installing       : libxslt-1.1.32-6.el8.x86_64                          12/72 
+  Installing       : groff-base-1.22.3-18.el8.x86_64                      13/72 
+  Installing       : perl-Digest-1.17-395.el8.noarch                      14/72 
+  Installing       : perl-Digest-MD5-2.55-396.el8.x86_64                  15/72 
+  Installing       : perl-Data-Dumper-2.167-399.el8.x86_64                16/72 
+  Installing       : perl-libnet-3.11-3.el8.noarch                        17/72 
+  Installing       : perl-Net-SSLeay-1.88-1.module+el8.3.0+6446+594cad7   18/72 
+  Installing       : perl-URI-1.73-3.el8.noarch                           19/72 
+  Installing       : perl-Mozilla-CA-20160104-7.module+el8.3.0+6498+9ee   20/72 
+  Installing       : perl-Pod-Escapes-1:1.07-395.el8.noarch               21/72 
+  Installing       : perl-IO-Socket-IP-0.39-5.el8.noarch                  22/72 
+  Installing       : perl-Time-Local-1:1.280-1.el8.noarch                 23/72 
+  Installing       : perl-IO-Socket-SSL-2.066-4.module+el8.3.0+6446+594   24/72 
+  Installing       : perl-Term-ANSIColor-4.06-396.el8.noarch              25/72 
+  Installing       : perl-Pod-Simple-1:3.35-395.el8.noarch                26/72 
+  Installing       : perl-File-Temp-0.230.600-1.el8.noarch                27/72 
+  Installing       : perl-Term-Cap-1.17-395.el8.noarch                    28/72 
+  Installing       : perl-HTTP-Tiny-0.074-1.el8.noarch                    29/72 
+  Installing       : perl-podlators-4.11-1.el8.noarch                     30/72 
+  Installing       : perl-Pod-Perldoc-3.28-396.el8.noarch                 31/72 
+  Installing       : perl-Text-ParseWords-3.30-395.el8.noarch             32/72 
+  Installing       : perl-Pod-Usage-4:1.69-395.el8.noarch                 33/72 
+  Installing       : perl-Storable-1:3.11-3.el8.x86_64                    34/72 
+  Installing       : perl-MIME-Base64-3.15-396.el8.x86_64                 35/72 
+  Installing       : perl-Getopt-Long-1:2.50-4.el8.noarch                 36/72 
+  Installing       : perl-Errno-1.28-419.el8.x86_64                       37/72 
+  Installing       : perl-Socket-4:2.027-3.el8.x86_64                     38/72 
+  Installing       : perl-Encode-4:2.97-3.el8.x86_64                      39/72 
+  Installing       : perl-macros-4:5.26.3-419.el8.x86_64                  40/72 
+  Installing       : perl-parent-1:0.237-1.el8.noarch                     41/72 
+  Installing       : perl-Scalar-List-Utils-3:1.49-2.el8.x86_64           42/72 
+  Installing       : perl-Carp-1.42-396.el8.noarch                        43/72 
+  Installing       : perl-Exporter-5.72-396.el8.noarch                    44/72 
+  Installing       : perl-libs-4:5.26.3-419.el8.x86_64                    45/72 
+  Installing       : perl-threads-shared-1.58-2.el8.x86_64                46/72 
+  Installing       : perl-threads-1:2.21-2.el8.x86_64                     47/72 
+  Installing       : perl-PathTools-3.74-1.el8.x86_64                     48/72 
+  Installing       : perl-IO-1.38-419.el8.x86_64                          49/72 
+  Installing       : perl-File-Path-2.15-2.el8.noarch                     50/72 
+  Installing       : perl-Text-Tabs+Wrap-2013.0523-395.el8.noarch         51/72 
+  Installing       : perl-Unicode-Normalize-1.25-396.el8.x86_64           52/72 
+  Installing       : perl-constant-1.33-396.el8.noarch                    53/72 
+  Installing       : perl-interpreter-4:5.26.3-419.el8.x86_64             54/72 
+  Installing       : libX11-common-1.6.8-4.el8.noarch                     55/72 
+  Installing       : libXau-1.0.9-3.el8.x86_64                            56/72 
+  Installing       : libxcb-1.13.1-1.el8.x86_64                           57/72 
+  Installing       : libX11-1.6.8-4.el8.x86_64                            58/72 
+  Installing       : libXpm-3.5.12-8.el8.x86_64                           59/72 
+  Running scriptlet: nginx-filesystem-1:1.14.1-9.module+el8.0.0+4108+af   60/72 
+  Installing       : nginx-filesystem-1:1.14.1-9.module+el8.0.0+4108+af   60/72 
+  Installing       : libwebp-1.0.0-1.el8.x86_64                           61/72 
+  Installing       : jbigkit-libs-2.1-14.el8.x86_64                       62/72 
+  Running scriptlet: jbigkit-libs-2.1-14.el8.x86_64                       62/72 
+  Installing       : libtiff-4.0.9-18.el8.x86_64                          63/72 
+  Installing       : gd-2.2.5-7.el8.x86_64                                64/72 
+  Running scriptlet: gd-2.2.5-7.el8.x86_64                                64/72 
+  Installing       : nginx-mod-stream-1:1.14.1-9.module+el8.0.0+4108+af   65/72 
+  Running scriptlet: nginx-mod-stream-1:1.14.1-9.module+el8.0.0+4108+af   65/72 
+  Installing       : nginx-mod-http-image-filter-1:1.14.1-9.module+el8.   66/72 
+  Running scriptlet: nginx-mod-http-image-filter-1:1.14.1-9.module+el8.   66/72 
+  Installing       : nginx-mod-http-xslt-filter-1:1.14.1-9.module+el8.0   67/72 
+  Running scriptlet: nginx-mod-http-xslt-filter-1:1.14.1-9.module+el8.0   67/72 
+  Installing       : nginx-mod-http-perl-1:1.14.1-9.module+el8.0.0+4108   68/72 
+  Running scriptlet: nginx-mod-http-perl-1:1.14.1-9.module+el8.0.0+4108   68/72 
+  Installing       : nginx-all-modules-1:1.14.1-9.module+el8.0.0+4108+a   69/72 
+  Installing       : nginx-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_   70/72 
+  Running scriptlet: nginx-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_   70/72 
+  Installing       : nginx-mod-mail-1:1.14.1-9.module+el8.0.0+4108+af25   71/72 
+  Running scriptlet: nginx-mod-mail-1:1.14.1-9.module+el8.0.0+4108+af25   71/72 
+  Cleanup          : openssl-libs-1:1.1.1-8.el8.x86_64                    72/72 
+  Running scriptlet: openssl-libs-1:1.1.1-8.el8.x86_64                    72/72 
+  Running scriptlet: fontconfig-2.13.1-3.el8.x86_64                       72/72 
+  Verifying        : nginx-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_    1/72 
+  Verifying        : jbigkit-libs-2.1-14.el8.x86_64                        2/72 
+  Verifying        : libwebp-1.0.0-1.el8.x86_64                            3/72 
+  Verifying        : nginx-all-modules-1:1.14.1-9.module+el8.0.0+4108+a    4/72 
+  Verifying        : nginx-mod-stream-1:1.14.1-9.module+el8.0.0+4108+af    5/72 
+  Verifying        : perl-Digest-1.17-395.el8.noarch                       6/72 
+  Verifying        : nginx-mod-http-image-filter-1:1.14.1-9.module+el8.    7/72 
+  Verifying        : perl-URI-1.73-3.el8.noarch                            8/72 
+  Verifying        : nginx-mod-http-xslt-filter-1:1.14.1-9.module+el8.0    9/72 
+  Verifying        : nginx-mod-http-perl-1:1.14.1-9.module+el8.0.0+4108   10/72 
+  Verifying        : libjpeg-turbo-1.5.3-10.el8.x86_64                    11/72 
+  Verifying        : perl-IO-Socket-IP-0.39-5.el8.noarch                  12/72 
+  Verifying        : perl-Digest-MD5-2.55-396.el8.x86_64                  13/72 
+  Verifying        : nginx-filesystem-1:1.14.1-9.module+el8.0.0+4108+af   14/72 
+  Verifying        : perl-libnet-3.11-3.el8.noarch                        15/72 
+  Verifying        : nginx-mod-mail-1:1.14.1-9.module+el8.0.0+4108+af25   16/72 
+  Verifying        : libX11-1.6.8-4.el8.x86_64                            17/72 
+  Verifying        : libtiff-4.0.9-18.el8.x86_64                          18/72 
+  Verifying        : libXpm-3.5.12-8.el8.x86_64                           19/72 
+  Verifying        : libXau-1.0.9-3.el8.x86_64                            20/72 
+  Verifying        : perl-IO-Socket-SSL-2.066-4.module+el8.3.0+6446+594   21/72 
+  Verifying        : libX11-common-1.6.8-4.el8.noarch                     22/72 
+  Verifying        : perl-Mozilla-CA-20160104-7.module+el8.3.0+6498+9ee   23/72 
+  Verifying        : gd-2.2.5-7.el8.x86_64                                24/72 
+  Verifying        : perl-Net-SSLeay-1.88-1.module+el8.3.0+6446+594cad7   25/72 
+  Verifying        : libxcb-1.13.1-1.el8.x86_64                           26/72 
+  Verifying        : fontpackages-filesystem-1.44-22.el8.noarch           27/72 
+  Verifying        : perl-Scalar-List-Utils-3:1.49-2.el8.x86_64           28/72 
+  Verifying        : perl-PathTools-3.74-1.el8.x86_64                     29/72 
+  Verifying        : perl-threads-1:2.21-2.el8.x86_64                     30/72 
+  Verifying        : perl-Pod-Simple-1:3.35-395.el8.noarch                31/72 
+  Verifying        : perl-Term-ANSIColor-4.06-396.el8.noarch              32/72 
+  Verifying        : perl-Data-Dumper-2.167-399.el8.x86_64                33/72 
+  Verifying        : perl-macros-4:5.26.3-419.el8.x86_64                  34/72 
+  Verifying        : perl-libs-4:5.26.3-419.el8.x86_64                    35/72 
+  Verifying        : perl-Errno-1.28-419.el8.x86_64                       36/72 
+  Verifying        : perl-threads-shared-1.58-2.el8.x86_64                37/72 
+  Verifying        : perl-HTTP-Tiny-0.074-1.el8.noarch                    38/72 
+  Verifying        : perl-Pod-Escapes-1:1.07-395.el8.noarch               39/72 
+  Verifying        : perl-IO-1.38-419.el8.x86_64                          40/72 
+  Verifying        : perl-Pod-Perldoc-3.28-396.el8.noarch                 41/72 
+  Verifying        : perl-Encode-4:2.97-3.el8.x86_64                      42/72 
+  Verifying        : perl-Socket-4:2.027-3.el8.x86_64                     43/72 
+  Verifying        : perl-File-Path-2.15-2.el8.noarch                     44/72 
+  Verifying        : perl-parent-1:0.237-1.el8.noarch                     45/72 
+  Verifying        : libpng-2:1.6.34-5.el8.x86_64                         46/72 
+  Verifying        : dejavu-fonts-common-2.35-7.el8.noarch                47/72 
+  Verifying        : perl-interpreter-4:5.26.3-419.el8.x86_64             48/72 
+  Verifying        : perl-Text-Tabs+Wrap-2013.0523-395.el8.noarch         49/72 
+  Verifying        : groff-base-1.22.3-18.el8.x86_64                      50/72 
+  Verifying        : perl-Getopt-Long-1:2.50-4.el8.noarch                 51/72 
+  Verifying        : libxslt-1.1.32-6.el8.x86_64                          52/72 
+  Verifying        : freetype-2.9.1-4.el8_3.1.x86_64                      53/72 
+  Verifying        : perl-podlators-4.11-1.el8.noarch                     54/72 
+  Verifying        : openssl-pkcs11-0.4.10-2.el8.x86_64                   55/72 
+  Verifying        : perl-Time-Local-1:1.280-1.el8.noarch                 56/72 
+  Verifying        : perl-Carp-1.42-396.el8.noarch                        57/72 
+  Verifying        : perl-Exporter-5.72-396.el8.noarch                    58/72 
+  Verifying        : perl-Storable-1:3.11-3.el8.x86_64                    59/72 
+  Verifying        : perl-Text-ParseWords-3.30-395.el8.noarch             60/72 
+  Verifying        : fontconfig-2.13.1-3.el8.x86_64                       61/72 
+  Verifying        : perl-Unicode-Normalize-1.25-396.el8.x86_64           62/72 
+  Verifying        : ncurses-6.1-7.20180224.el8.x86_64                    63/72 
+  Verifying        : openssl-1:1.1.1g-15.el8_3.x86_64                     64/72 
+  Verifying        : perl-File-Temp-0.230.600-1.el8.noarch                65/72 
+  Verifying        : perl-constant-1.33-396.el8.noarch                    66/72 
+  Verifying        : perl-Term-Cap-1.17-395.el8.noarch                    67/72 
+  Verifying        : perl-MIME-Base64-3.15-396.el8.x86_64                 68/72 
+  Verifying        : dejavu-sans-fonts-2.35-7.el8.noarch                  69/72 
+  Verifying        : perl-Pod-Usage-4:1.69-395.el8.noarch                 70/72 
+  Verifying        : openssl-libs-1:1.1.1g-15.el8_3.x86_64                71/72 
+  Verifying        : openssl-libs-1:1.1.1-8.el8.x86_64                    72/72 
+Installed products updated.
+
+Upgraded:
+  openssl-libs-1:1.1.1g-15.el8_3.x86_64                                         
+
+Installed:
+  nginx-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_64                          
+  nginx-mod-http-perl-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_64            
+  perl-IO-Socket-IP-0.39-5.el8.noarch                                           
+  perl-IO-Socket-SSL-2.066-4.module+el8.3.0+6446+594cad75.noarch                
+  perl-Mozilla-CA-20160104-7.module+el8.3.0+6498+9eecfe51.noarch                
+  openssl-pkcs11-0.4.10-2.el8.x86_64                                            
+  jbigkit-libs-2.1-14.el8.x86_64                                                
+  libwebp-1.0.0-1.el8.x86_64                                                    
+  nginx-all-modules-1:1.14.1-9.module+el8.0.0+4108+af250afe.noarch              
+  nginx-mod-stream-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_64               
+  perl-Digest-1.17-395.el8.noarch                                               
+  nginx-mod-http-image-filter-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_64    
+  perl-URI-1.73-3.el8.noarch                                                    
+  nginx-mod-http-xslt-filter-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_64     
+  libjpeg-turbo-1.5.3-10.el8.x86_64                                             
+  perl-Digest-MD5-2.55-396.el8.x86_64                                           
+  nginx-filesystem-1:1.14.1-9.module+el8.0.0+4108+af250afe.noarch               
+  perl-libnet-3.11-3.el8.noarch                                                 
+  nginx-mod-mail-1:1.14.1-9.module+el8.0.0+4108+af250afe.x86_64                 
+  libX11-1.6.8-4.el8.x86_64                                                     
+  libtiff-4.0.9-18.el8.x86_64                                                   
+  libXpm-3.5.12-8.el8.x86_64                                                    
+  libXau-1.0.9-3.el8.x86_64                                                     
+  libX11-common-1.6.8-4.el8.noarch                                              
+  gd-2.2.5-7.el8.x86_64                                                         
+  perl-Net-SSLeay-1.88-1.module+el8.3.0+6446+594cad75.x86_64                    
+  libxcb-1.13.1-1.el8.x86_64                                                    
+  fontpackages-filesystem-1.44-22.el8.noarch                                    
+  perl-Scalar-List-Utils-3:1.49-2.el8.x86_64                                    
+  perl-PathTools-3.74-1.el8.x86_64                                              
+  perl-threads-1:2.21-2.el8.x86_64                                              
+  perl-Pod-Simple-1:3.35-395.el8.noarch                                         
+  perl-Term-ANSIColor-4.06-396.el8.noarch                                       
+  perl-Data-Dumper-2.167-399.el8.x86_64                                         
+  perl-macros-4:5.26.3-419.el8.x86_64                                           
+  perl-libs-4:5.26.3-419.el8.x86_64                                             
+  perl-Errno-1.28-419.el8.x86_64                                                
+  perl-threads-shared-1.58-2.el8.x86_64                                         
+  perl-HTTP-Tiny-0.074-1.el8.noarch                                             
+  perl-Pod-Escapes-1:1.07-395.el8.noarch                                        
+  perl-IO-1.38-419.el8.x86_64                                                   
+  perl-Pod-Perldoc-3.28-396.el8.noarch                                          
+  perl-Encode-4:2.97-3.el8.x86_64                                               
+  perl-Socket-4:2.027-3.el8.x86_64                                              
+  perl-File-Path-2.15-2.el8.noarch                                              
+  perl-parent-1:0.237-1.el8.noarch                                              
+  libpng-2:1.6.34-5.el8.x86_64                                                  
+  dejavu-fonts-common-2.35-7.el8.noarch                                         
+  perl-interpreter-4:5.26.3-419.el8.x86_64                                      
+  perl-Text-Tabs+Wrap-2013.0523-395.el8.noarch                                  
+  groff-base-1.22.3-18.el8.x86_64                                               
+  perl-Getopt-Long-1:2.50-4.el8.noarch                                          
+  libxslt-1.1.32-6.el8.x86_64                                                   
+  freetype-2.9.1-4.el8_3.1.x86_64                                               
+  perl-podlators-4.11-1.el8.noarch                                              
+  perl-Time-Local-1:1.280-1.el8.noarch                                          
+  perl-Carp-1.42-396.el8.noarch                                                 
+  perl-Exporter-5.72-396.el8.noarch                                             
+  perl-Storable-1:3.11-3.el8.x86_64                                             
+  perl-Text-ParseWords-3.30-395.el8.noarch                                      
+  fontconfig-2.13.1-3.el8.x86_64                                                
+  perl-Unicode-Normalize-1.25-396.el8.x86_64                                    
+  ncurses-6.1-7.20180224.el8.x86_64                                             
+  openssl-1:1.1.1g-15.el8_3.x86_64                                              
+  perl-File-Temp-0.230.600-1.el8.noarch                                         
+  perl-constant-1.33-396.el8.noarch                                             
+  perl-Term-Cap-1.17-395.el8.noarch                                             
+  perl-MIME-Base64-3.15-396.el8.x86_64                                          
+  dejavu-sans-fonts-2.35-7.el8.noarch                                           
+  perl-Pod-Usage-4:1.69-395.el8.noarch                                          
+
+Complete!
+Updating Subscription Management repositories.
+Unable to read consumer identity
+Subscription Manager is operating in container mode.
+This system is not registered to Red Hat Subscription Management. You can use subscription-manager to register.
+16 files removed
+--> a11e8ee99d07d20b5f0c674b25536732a911e4d4feb1bbbd7ce0be6a0b3a27ee
+STEP 7: FROM a11e8ee99d07d20b5f0c674b25536732a911e4d4feb1bbbd7ce0be6a0b3a27ee
+STEP 8: COPY nginx.conf /etc/nginx/
+--> 6f98246d7c1713f64608daecc40b772bdfaa9008db2e3a0fc75935c83003699b
+STEP 9: FROM 6f98246d7c1713f64608daecc40b772bdfaa9008db2e3a0fc75935c83003699b
+STEP 10: RUN touch /run/nginx.pid &&     chgrp -R 1001:0 /var/log/nginx /run/nginx.pid &&     chmod -R g=u /var/log/nginx /run/nginx.pid
+chgrp: invalid group: '1001:0'
+error building at step {Env:[PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin container=oci BACKEND_HOST=localhost:8081] Command:run Args:[touch /run/nginx.pid &&     chgrp -R 1001:0 /var/log/nginx /run/nginx.pid &&     chmod -R g=u /var/log/nginx /run/nginx.pid] Flags:[] Attrs:map[] Message:RUN touch /run/nginx.pid &&     chgrp -R 1001:0 /var/log/nginx /run/nginx.pid &&     chmod -R g=u /var/log/nginx /run/nginx.pid Original:RUN touch /run/nginx.pid &&     chgrp -R 1001:0 /var/log/nginx /run/nginx.pid &&     chmod -R g=u /var/log/nginx /run/nginx.pid}: error while running runtime: exit status 1
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ sudo podman build -t front-end .
+STEP 1: FROM registry.access.redhat.com/ubi8:8.0
+STEP 2: LABEL version="1.0"     description="To Do List application front-end"     creationDate="2017-12-25"     updatedDate="2019-08-01"
+--> Using cache c53c501066c0d3c9064fb8c4c56340093350d69668394a0aef41df657772b9b5
+STEP 3: FROM c53c501066c0d3c9064fb8c4c56340093350d69668394a0aef41df657772b9b5
+STEP 4: ENV BACKEND_HOST=localhost:8081
+--> Using cache fd07aca9a98b61c1234ca4cff223439f83902bdd0c673c4041fc76e2d47a264a
+STEP 5: FROM fd07aca9a98b61c1234ca4cff223439f83902bdd0c673c4041fc76e2d47a264a
+STEP 6: RUN yum install -y --disableplugin=subscription-manager --nodocs   nginx nginx-mod-http-perl && yum clean all
+--> Using cache a11e8ee99d07d20b5f0c674b25536732a911e4d4feb1bbbd7ce0be6a0b3a27ee
+STEP 7: FROM a11e8ee99d07d20b5f0c674b25536732a911e4d4feb1bbbd7ce0be6a0b3a27ee
+STEP 8: COPY nginx.conf /etc/nginx/
+--> Using cache 6f98246d7c1713f64608daecc40b772bdfaa9008db2e3a0fc75935c83003699b
+STEP 9: FROM 6f98246d7c1713f64608daecc40b772bdfaa9008db2e3a0fc75935c83003699b
+STEP 10: RUN touch /run/nginx.pid &&     chgrp -R 0 /var/log/nginx /run/nginx.pid &&     chmod -R g+rwx /var/log/nginx /run/nginx.pid
+--> cbad6354ca568b28a6076fb571885611e9e8443442999e9cc7cc410991c431e0
+STEP 11: FROM cbad6354ca568b28a6076fb571885611e9e8443442999e9cc7cc410991c431e0
+STEP 12: COPY src/ /usr/share/nginx/html
+--> 8947ac9b54e641203a593529a670735a889486cb864f83a66f1bf9de884ada0f
+STEP 13: FROM 8947ac9b54e641203a593529a670735a889486cb864f83a66f1bf9de884ada0f
+STEP 14: EXPOSE 8080
+--> bcb7a102ccb2b38448a82978404c9a10033b75ee252603cc0596958343960ea2
+STEP 15: FROM bcb7a102ccb2b38448a82978404c9a10033b75ee252603cc0596958343960ea2
+STEP 16: USER 1001
+--> dd4355ed2fd15c6139ae970fb901d5b5985b42e9db9b1397b283dee1ed1af904
+STEP 17: FROM dd4355ed2fd15c6139ae970fb901d5b5985b42e9db9b1397b283dee1ed1af904
+STEP 18: CMD nginx -g "daemon off;"
+--> cf78606c720affe53a071d92443de23658df3131390c61dca29f7c85acad3684
+STEP 19: COMMIT front-end
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ sudo podman images
+REPOSITORY                        TAG      IMAGE ID       CREATED          SIZE
+localhost/front-end               latest   cf78606c720a   20 seconds ago   293MB
+registry.access.redhat.com/ubi8   8.0      11f9dba4d1bc   20 months ago    216MB
+[student@workstation todo-frontend]$ sudo podman images
+REPOSITORY                        TAG      IMAGE ID       CREATED         SIZE
+localhost/front-end               latest   cf78606c720a   4 minutes ago   293MB
+registry.access.redhat.com/ubi8   8.0      11f9dba4d1bc   20 months ago   216MB
+[student@workstation todo-frontend]$ sudo podman rmi localhost/front-end
+dd4355ed2fd15c6139ae970fb901d5b5985b42e9db9b1397b283dee1ed1af904
+bcb7a102ccb2b38448a82978404c9a10033b75ee252603cc0596958343960ea2
+8947ac9b54e641203a593529a670735a889486cb864f83a66f1bf9de884ada0f
+cbad6354ca568b28a6076fb571885611e9e8443442999e9cc7cc410991c431e0
+cf78606c720affe53a071d92443de23658df3131390c61dca29f7c85acad3684
+[student@workstation todo-frontend]$ sudo podman build -t todo-frontend .
+STEP 1: FROM registry.access.redhat.com/ubi8:8.0
+STEP 2: LABEL version="1.0"     description="To Do List application front-end"     creationDate="2017-12-25"     updatedDate="2019-08-01"
+--> Using cache c53c501066c0d3c9064fb8c4c56340093350d69668394a0aef41df657772b9b5
+STEP 3: FROM c53c501066c0d3c9064fb8c4c56340093350d69668394a0aef41df657772b9b5
+STEP 4: ENV BACKEND_HOST=localhost:8081
+--> Using cache fd07aca9a98b61c1234ca4cff223439f83902bdd0c673c4041fc76e2d47a264a
+STEP 5: FROM fd07aca9a98b61c1234ca4cff223439f83902bdd0c673c4041fc76e2d47a264a
+STEP 6: RUN yum install -y --disableplugin=subscription-manager --nodocs   nginx nginx-mod-http-perl && yum clean all
+--> Using cache a11e8ee99d07d20b5f0c674b25536732a911e4d4feb1bbbd7ce0be6a0b3a27ee
+STEP 7: FROM a11e8ee99d07d20b5f0c674b25536732a911e4d4feb1bbbd7ce0be6a0b3a27ee
+STEP 8: COPY nginx.conf /etc/nginx/
+--> Using cache 6f98246d7c1713f64608daecc40b772bdfaa9008db2e3a0fc75935c83003699b
+STEP 9: FROM 6f98246d7c1713f64608daecc40b772bdfaa9008db2e3a0fc75935c83003699b
+STEP 10: RUN touch /run/nginx.pid &&     chgrp -R 0 /var/log/nginx /run/nginx.pid &&     chmod -R g+rwx /var/log/nginx /run/nginx.pid
+--> cfb7a43f21710d8bcd3db5e9feb2b29bbcfa8b23f5f4ea56c2a88687abb877f7
+STEP 11: FROM cfb7a43f21710d8bcd3db5e9feb2b29bbcfa8b23f5f4ea56c2a88687abb877f7
+STEP 12: COPY src/ /usr/share/nginx/html
+--> 29ca4d85d8fdf39c3ee26bca2d3ed70f4c26ce324f7df8619dde8f10472c7e4b
+STEP 13: FROM 29ca4d85d8fdf39c3ee26bca2d3ed70f4c26ce324f7df8619dde8f10472c7e4b
+STEP 14: EXPOSE 8080
+--> a8eb189bb067a2b4324868a45b8244ee19f3b7b0a832ed4296b35c6aaffba39a
+STEP 15: FROM a8eb189bb067a2b4324868a45b8244ee19f3b7b0a832ed4296b35c6aaffba39a
+STEP 16: USER 1001
+--> 7318b45ff088d1fa8d203704662f23b7bbcd70a89fb27ac920d8340f5147757a
+STEP 17: FROM 7318b45ff088d1fa8d203704662f23b7bbcd70a89fb27ac920d8340f5147757a
+STEP 18: CMD nginx -g "daemon off;"
+--> 4e33eeed8d1c85c30c74acdddeac36cd0f9f38cf7ae5971d6cb82ac08c7481dc
+STEP 19: COMMIT todo-frontend
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ sudo podman run --name testfe -u 1234 -p 8080:8080 -d todo-frontend
+988c0c1a26ce07755d9093fa2ace5552928f37b9fc4a27b0bebfb28a7194672f
+[student@workstation todo-frontend]$ curl http://localhost:8080
+<!DOCTYPE html>
+
+<html ng-app="items">
+<head>
+    <title>To Do List</title>
+
+    <link rel="stylesheet" href="lib/dependencies/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="lib/dependencies/css/ng-grid.min.css" />
+
+    <!-- build:css css/application.css -->
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+    <!-- endbuild -->
+
+    <script src="lib/dependencies/jquery.min.js"></script>
+    <script src="lib/dependencies/angular.min.js"></script>
+    <script src="lib/dependencies/angular-resource.min.js"></script>
+    <script src="lib/dependencies/ng-grid-2.0.11.min.js"></script>
+    <script src="lib/dependencies/ui-bootstrap-tpls.min.js"></script>
+
+    <!-- build:js script/all.js -->
+    <script src="script/item.js"></script>
+    <!-- endbuild -->
+</head>
+
+<body>
+
+<h1>To Do List Application</h1>
+
+<br/>
+
+<!-- Specify a Angular controller script that binds Javascript variables to the feedback messages.-->
+<div class="message" ng-controller="alertMessagesController">
+    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
+</div>
+
+<br>
+
+<!-- Specify a Angular controller script that binds Javascript variables to the grid.-->
+<div class="grid" ng-controller="itemsListController">
+    <div>
+        <h3>To Do List</h3>
+    </div>
+
+    <!-- Binds the grid component to be displayed. -->
+    <div class="gridStyle" ng-grid="gridOptions"></div>
+
+    <!--  Bind the pagination component to be displayed. -->
+    <pagination direction-links="true" boundary-links="true"
+                total-items="items.totalResults" items-per-page="items.pageSize"
+                ng-model="items.currentPage" ng-change="refreshGrid()">
+    </pagination>
+</div>
+
+<!-- Specify a Angular controller script that binds Javascript variables to the form.-->
+<div class="form" ng-controller="itemsFormController">
+    <!-- Verify item, if there is no id present, that we are Adding a Item -->
+    <div ng-if="item.id == null">
+        <h3>Add Task</h3>
+    </div>
+    <!-- Otherwise it's an Edit -->
+    <div ng-if="item.id != null">
+        <h3>Edit Task</h3>
+    </div>
+
+    <div>
+        <!-- Specify the function to be called on submit and disable HTML5 validation, since we're using Angular validation-->
+        <form name="itemForm" ng-submit="updateItem()" novalidate>
+
+            <!-- Display an error if the input is invalid and is dirty (only when someone changes the value) -->
+            <div class="form-group" ng-class="{'has-error' : itemForm.description.$invalid && itemForm.description.$dirty}">
+                <label for="description">Description:</label>
+                <!-- Display a check when the field is valid and was modified -->
+                <span ng-class="{'glyphicon glyphicon-ok' : itemForm.description.$valid && itemForm.description.$dirty}"></span>
+
+                <input id="description" name="description" type="text" class="form-control" maxlength="100"
+                       ng-model="item.description"
+                       required ng-minlength="5" ng-maxlength="100"/>
+
+                <!-- Validation messages to be displayed on required, minlength and maxlength -->
+                <p class="help-block" ng-show="itemForm.description.$error.required">Add Description.</p>
+                <p class="help-block" ng-show="itemForm.description.$error.minlength">Description must be at least 5 characters long.</p>
+                <p class="help-block" ng-show="itemForm.description.$error.maxlength">Description cannot be longer than 100 characters.</p>
+            </div>
+
+            <div class="form-group" ng-class="{'has-error' : itemForm.done.$invalid && itemForm.done.$dirty}">
+                <label for="done">Completed:</label>
+                <!-- Display a check when the field is valid and was modified -->
+                <span ng-class="{'glyphicon glyphicon-ok' : itemForm.done.$valid && itemForm.done.$dirty}"></span>
+
+                <input id="done" name="done" type="checkbox" class="form-control"
+                       ng-model="item.done" />
+
+            </div>
+
+            <!-- Form buttons. The 'Save' button is only enabled when the form is valid. -->
+            <div class="buttons">
+                <button type="button" class="btn btn-primary" ng-click="clearForm()">Clear</button>
+                <button type="submit" class="btn btn-primary" ng-disabled="itemForm.$invalid">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="footer" ng-controller="hostController">
+From host: {{host.hostname}} / {{host.ip}}
+</div>
+</body>
+</html>
+[student@workstation todo-frontend]$ curl http://localhost:8080 | grep h1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0<h1>To Do List Application</h1>
+100  4609    0  4609    0     0   743k      0 --:--:-- --:--:-- --:--:--  900k
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ sudo podman images
+REPOSITORY                        TAG      IMAGE ID       CREATED              SIZE
+localhost/todo-frontend           latest   4e33eeed8d1c   About a minute ago   293MB
+registry.access.redhat.com/ubi8   8.0      11f9dba4d1bc   20 months ago        216MB
+[student@workstation todo-frontend]$ sudo podman ps -a
+CONTAINER ID   IMAGE                            COMMAND                  CREATED              STATUS                  PORTS                    NAMES    IS INFRA
+988c0c1a26ce   localhost/todo-frontend:latest   /bin/sh -c nginx -g...   About a minute ago   Up About a minute ago   0.0.0.0:8080->8080/tcp   testfe   false
+[student@workstation todo-frontend]$ sudo podman rm testfe
+failed to delete container 988c0c1a26ce07755d9093fa2ace5552928f37b9fc4a27b0bebfb28a7194672f: cannot remove container 988c0c1a26ce07755d9093fa2ace5552928f37b9fc4a27b0bebfb28a7194672f as it is running - running or paused containers cannot be removed: container state improper
+[student@workstation todo-frontend]$ sudo podman stop testfe
+988c0c1a26ce07755d9093fa2ace5552928f37b9fc4a27b0bebfb28a7194672f
+[student@workstation todo-frontend]$ sudo podman rm testfe
+988c0c1a26ce07755d9093fa2ace5552928f37b9fc4a27b0bebfb28a7194672f
+[student@workstation todo-frontend]$ podman login -u agagno quay.io
+Password: 
+Login Succeeded!
+[student@workstation todo-frontend]$ sudo podman login -u agagno quay.io
+Password: 
+Login Succeeded!
+[student@workstation todo-frontend]$ oc projects
+You are not a member of any projects. You can request a project to be created with the 'new-project' command.
+[student@workstation todo-frontend]$ oc create secret generic quayio --from-file .dockerconfigjson=${XDG_RUNTIME_DIR}/containers/auth.json --type kubernetes.io/dockerconfigjson
+Error from server (Forbidden): secrets is forbidden: User "bsctlf" cannot create resource "secrets" in API group "" in the namespace "default"
+[student@workstation todo-frontend]$ oc new-project bsctlf-review-common
+Now using project "bsctlf-review-common" on server "https://api.na45.prod.nextcle.com:6443".
+
+You can add applications to this project with the 'new-app' command. For example, try:
+
+    oc new-app ruby~https://github.com/sclorg/ruby-ex.git
+
+to build a new example application in Ruby. Or use kubectl to deploy a simple Kubernetes application:
+
+    kubectl create deployment hello-node --image=gcr.io/hello-minikube-zero-install/hello-node
+
+[student@workstation todo-frontend]$ oc create secret generic quayio --from-file .dockerconfigjson=${XDG_RUNTIME_DIR}/containers/auth.json --type kubernetes.io/dockerconfigjson
+secret/quayio created
+[student@workstation todo-frontend]$ oc secrets link builder quayio 
+[student@workstation todo-frontend]$ sudo podman images
+REPOSITORY                        TAG      IMAGE ID       CREATED         SIZE
+localhost/todo-frontend           latest   4e33eeed8d1c   6 minutes ago   293MB
+registry.access.redhat.com/ubi8   8.0      11f9dba4d1bc   20 months ago   216MB
+[student@workstation todo-frontend]$ sudo skopeo copy containers-storage:localhost/todo-frontend docker://quay.io/agagno/todo-frontend:latest
+Getting image source signatures
+Copying blob sha256:6866631b657ec5662f4faf948c771d9585a8ea005b1373360ada0a4507cd5c09
+ 205.77 MB / 205.77 MB [===================================================] 14s
+Copying blob sha256:48905dae401049ac43befb4f900a6aa0b5d30119db1f0cd0cca92980e0040ad0
+ 20.00 KB / 20.00 KB [======================================================] 0s
+Copying blob sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef
+ 1024 B / 1024 B [==========================================================] 0s
+Copying blob sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef
+ 1024 B / 1024 B [==========================================================] 0s
+Copying blob sha256:746091bbc0534ae7e1c0771b6bd658fa232376c353456fcf9256bae9e73cd660
+ 73.25 MB / 73.25 MB [======================================================] 8s
+Copying blob sha256:db10b13066b910250a3b3859c2ef72a50b5a75799765daea01d440e3f21461c4
+ 4.50 KB / 4.50 KB [========================================================] 1s
+Copying blob sha256:d6dcf4cc9714c57362ca80d7cca2a5f2df828d55c094d94ab1cd8342587a648d
+ 3.50 KB / 3.50 KB [========================================================] 1s
+Copying blob sha256:cdee587ff6df8ff5e52192591ebbd56f45828c438bd95cb38efd8a85c77ad9c2
+ 616.50 KB / 616.50 KB [====================================================] 2s
+Copying blob sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef
+ 1024 B / 1024 B [==========================================================] 1s
+Copying blob sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef
+ 1024 B / 1024 B [==========================================================] 0s
+Copying blob sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef
+ 1024 B / 1024 B [==========================================================] 0s
+Copying config sha256:4e33eeed8d1c85c30c74acdddeac36cd0f9f38cf7ae5971d6cb82ac08c7481dc
+ 3.72 KB / 3.72 KB [========================================================] 1s
+Writing manifest to image destination
+Copying config sha256:4e33eeed8d1c85c30c74acdddeac36cd0f9f38cf7ae5971d6cb82ac08c7481dc
+ 0 B / 3.72 KB [------------------------------------------------------------] 0s
+Writing manifest to image destination
+Storing signatures
+[student@workstation todo-frontend]$ oc import-image --name todo-frontend --from quay.io/agagno/todo-frontend --confirm --reference-policy local
+Error: unknown flag: --name
+See 'oc import-image --help' for usage.
+[student@workstation todo-frontend]$ oc import-image todo-frontend --from quay.io/agagno/todo-frontend --confirm --reference-policy local
+imagestream.image.openshift.io/todo-frontend imported
+
+Name:			todo-frontend
+Namespace:		bsctlf-review-common
+Created:		Less than a second ago
+Labels:			<none>
+Annotations:		openshift.io/image.dockerRepositoryCheck=2021-06-02T01:11:56Z
+Image Repository:	image-registry.openshift-image-registry.svc:5000/bsctlf-review-common/todo-frontend
+Image Lookup:		local=false
+Unique Images:		1
+Tags:			1
+
+latest
+  tagged from quay.io/agagno/todo-frontend
+    prefer registry pullthrough when referencing this tag
+
+  * quay.io/agagno/todo-frontend@sha256:df75d4fea557473027393fc884427e265968e804199d8726e69fcd531a96f332
+      Less than a second ago
+
+Image Name:	todo-frontend:latest
+Docker Image:	quay.io/agagno/todo-frontend@sha256:df75d4fea557473027393fc884427e265968e804199d8726e69fcd531a96f332
+Name:		sha256:df75d4fea557473027393fc884427e265968e804199d8726e69fcd531a96f332
+Created:	Less than a second ago
+Annotations:	image.openshift.io/dockerLayersOrder=ascending
+Image Size:	95.5MB in 11 layers
+Layers:		71.03MB	sha256:c65691897a4d140d441e2024ce086de996b1c4620832b90c973db81329577274
+		1.52kB	sha256:641d7cc5cbc48a13c68806cf25d5bcf76ea2157c3181e1db4f5d0edae34954ac
+		32B	sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
+		32B	sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
+		24.24MB	sha256:0431307157ca37f8ae73fade291e85dec19d2a5face3a3acd2790f9bfd73d3d2
+		912B	sha256:23ca33b15b9be71b675b8fe966bee4566b8b3fa56b29938d91924cad16996fe6
+		210B	sha256:117e14c0d6da714b0b7a1123ea48d95f715d2f071e29067a29edccf8f97c74d2
+		222.8kB	sha256:4261fd555bd4a5084cdf7791c0571549d36422d8d83495b607eb1d5ac11c810b
+		32B	sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
+		32B	sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
+		32B	sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1
+Image Created:	9 minutes ago
+Author:		<none>
+Arch:		amd64
+Command:	/bin/sh -c nginx -g "daemon off;"
+Working Dir:	<none>
+User:		1001
+Exposes Ports:	8080/tcp
+Docker Labels:	architecture=x86_64
+		authoritative-source-url=registry.access.redhat.com
+		build-date=2019-09-16T12:28:55.971236
+		com.redhat.build-host=cpt-1001.osbs.prod.upshift.rdu2.redhat.com
+		com.redhat.component=ubi8-container
+		com.redhat.license_terms=https://www.redhat.com/en/about/red-hat-end-user-license-agreements#UBI
+		creationDate=2017-12-25
+		description=To Do List application front-end
+		distribution-scope=public
+		io.k8s.description=The Universal Base Image is designed and engineered to be the base layer for all of your containerized applications, middleware and utilities. This base image is freely redistributable, but Red Hat only supports Red Hat technologies through subscriptions for Red Hat products. This image is maintained by Red Hat and updated regularly.
+		io.k8s.display-name=Red Hat Universal Base Image 8
+		io.openshift.expose-services=
+		io.openshift.tags=base rhel8
+		maintainer=Red Hat, Inc.
+		name=ubi8
+		release=208
+		summary=Provides the latest release of Red Hat Universal Base Image 8.
+		updatedDate=2019-08-01
+		url=https://access.redhat.com/containers/#/registry.access.redhat.com/ubi8/images/8.0-208
+		vcs-ref=592956edf47ff0ce45123f240898eabb469ac836
+		vcs-type=git
+		vendor=Red Hat, Inc.
+		version=1.0
+Environment:	PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+		container=oci
+		BACKEND_HOST=localhost:8081
+
+
+[student@workstation todo-frontend]$  oc get all
+NAME                                           IMAGE REPOSITORY                                                                                       TAGS     UPDATED
+imagestream.image.openshift.io/todo-frontend   default-route-openshift-image-registry.apps.na45.prod.nextcle.com/bsctlf-review-common/todo-frontend   latest   52 seconds ago
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ oc projects
+You have one project on this server: "bsctlf-review-common".
+
+Using project "bsctlf-review-common" on server "https://api.na45.prod.nextcle.com:6443".
+[student@workstation todo-frontend]$ oc new-project bsctlf-review-dockerfile
+Now using project "bsctlf-review-dockerfile" on server "https://api.na45.prod.nextcle.com:6443".
+
+You can add applications to this project with the 'new-app' command. For example, try:
+
+    oc new-app ruby~https://github.com/sclorg/ruby-ex.git
+
+to build a new example application in Ruby. Or use kubectl to deploy a simple Kubernetes application:
+
+    kubectl create deployment hello-node --image=gcr.io/hello-minikube-zero-install/hello-node
+
+[student@workstation todo-frontend]$ oc policy add-role-to-group system:image-puller system:serviceaccounts:bsctlf-review-dockerfile -n bsctlf-review-common
+clusterrole.rbac.authorization.k8s.io/system:image-puller added: "system:serviceaccounts:bsctlf-review-dockerfile"
+[student@workstation todo-frontend]$ oc new-app --as-deployment-config --name frontend bsctlf-review-common/todo-frontend -e BACKEND_HOST=api.example.com
+--> Found image 4e33eee (15 minutes old) in image stream "bsctlf-review-common/todo-frontend" under tag "latest" for "bsctlf-review-common/todo-frontend"
+
+    Red Hat Universal Base Image 8 
+    ------------------------------ 
+    The Universal Base Image is designed and engineered to be the base layer for all of your containerized applications, middleware and utilities. This base image is freely redistributable, but Red Hat only supports Red Hat technologies through subscriptions for Red Hat products. This image is maintained by Red Hat and updated regularly.
+
+    Tags: base rhel8
+
+    * This image will be deployed in deployment config "frontend"
+    * Port 8080/tcp will be load balanced by service "frontend"
+      * Other containers can access this service through the hostname "frontend"
+
+--> Creating resources ...
+    imagestreamtag.image.openshift.io "frontend:latest" created
+    deploymentconfig.apps.openshift.io "frontend" created
+    service "frontend" created
+--> Success
+    Application is not exposed. You can expose services to the outside world by executing one or more of the commands below:
+     'oc expose svc/frontend' 
+    Run 'oc status' to view your app.
+[student@workstation todo-frontend]$ oc get pods
+NAME                READY   STATUS         RESTARTS   AGE
+frontend-1-deploy   1/1     Running        0          10s
+frontend-1-xgqr9    0/1     ErrImagePull   0          8s
+[student@workstation todo-frontend]$ oc logs frontend-1-xgqr9
+[student@workstation todo-frontend]$ oc logs frontend-1-xgqr9
+[student@workstation todo-frontend]$ oc logs frontend-1-deploy
+--> Scaling frontend-1 to 1
+--> Success
+[student@workstation todo-frontend]$ sudo podman -u agagno -p $(whoami -t)  default-route-openshift-image-registry.apps.na45.prod.nextcle.com
+whoami: invalid option -- 't'
+Try 'whoami --help' for more information.
+flag provided but not defined: -u
+See 'podman --help'.
+[student@workstation todo-frontend]$ sudo podman -u agagno -p $(oc whoami -t)  default-route-openshift-image-registry.apps.na45.prod.nextcle.com
+flag provided but not defined: -u
+See 'podman --help'.
+[student@workstation todo-frontend]$ sudo podman login -u agagno -p $(oc whoami -t)  default-route-openshift-image-registry.apps.na45.prod.nextcle.com
+Login Succeeded!
+[student@workstation todo-frontend]$ oc get pods
+NAME                READY   STATUS      RESTARTS   AGE
+frontend-1-deploy   0/1     Completed   0          3m9s
+frontend-1-xgqr9    1/1     Running     0          3m7s
+[student@workstation todo-frontend]$ oc expose svc frontend
+route.route.openshift.io/frontend exposed
+[student@workstation todo-frontend]$ oc get route
+NAME       HOST/PORT                                                      PATH   SERVICES   PORT       TERMINATION   WILDCARD
+frontend   frontend-bsctlf-review-dockerfile.apps.na45.prod.nextcle.com          frontend   8080-tcp                 None
+[student@workstation todo-frontend]$ curl frontend-bsctlf-review-dockerfile.apps.na45.prod.nextcle.com
+<!DOCTYPE html>
+
+<html ng-app="items">
+<head>
+    <title>To Do List</title>
+
+    <link rel="stylesheet" href="lib/dependencies/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="lib/dependencies/css/ng-grid.min.css" />
+
+    <!-- build:css css/application.css -->
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+    <!-- endbuild -->
+
+    <script src="lib/dependencies/jquery.min.js"></script>
+    <script src="lib/dependencies/angular.min.js"></script>
+    <script src="lib/dependencies/angular-resource.min.js"></script>
+    <script src="lib/dependencies/ng-grid-2.0.11.min.js"></script>
+    <script src="lib/dependencies/ui-bootstrap-tpls.min.js"></script>
+
+    <!-- build:js script/all.js -->
+    <script src="script/item.js"></script>
+    <!-- endbuild -->
+</head>
+
+<body>
+
+<h1>To Do List Application</h1>
+
+<br/>
+
+<!-- Specify a Angular controller script that binds Javascript variables to the feedback messages.-->
+<div class="message" ng-controller="alertMessagesController">
+    <alert ng-repeat="alert in alerts" type="{{alert.type}}" close="closeAlert($index)">{{alert.msg}}</alert>
+</div>
+
+<br>
+
+<!-- Specify a Angular controller script that binds Javascript variables to the grid.-->
+<div class="grid" ng-controller="itemsListController">
+    <div>
+        <h3>To Do List</h3>
+    </div>
+
+    <!-- Binds the grid component to be displayed. -->
+    <div class="gridStyle" ng-grid="gridOptions"></div>
+
+    <!--  Bind the pagination component to be displayed. -->
+    <pagination direction-links="true" boundary-links="true"
+                total-items="items.totalResults" items-per-page="items.pageSize"
+                ng-model="items.currentPage" ng-change="refreshGrid()">
+    </pagination>
+</div>
+
+<!-- Specify a Angular controller script that binds Javascript variables to the form.-->
+<div class="form" ng-controller="itemsFormController">
+    <!-- Verify item, if there is no id present, that we are Adding a Item -->
+    <div ng-if="item.id == null">
+        <h3>Add Task</h3>
+    </div>
+    <!-- Otherwise it's an Edit -->
+    <div ng-if="item.id != null">
+        <h3>Edit Task</h3>
+    </div>
+
+    <div>
+        <!-- Specify the function to be called on submit and disable HTML5 validation, since we're using Angular validation-->
+        <form name="itemForm" ng-submit="updateItem()" novalidate>
+
+            <!-- Display an error if the input is invalid and is dirty (only when someone changes the value) -->
+            <div class="form-group" ng-class="{'has-error' : itemForm.description.$invalid && itemForm.description.$dirty}">
+                <label for="description">Description:</label>
+                <!-- Display a check when the field is valid and was modified -->
+                <span ng-class="{'glyphicon glyphicon-ok' : itemForm.description.$valid && itemForm.description.$dirty}"></span>
+
+                <input id="description" name="description" type="text" class="form-control" maxlength="100"
+                       ng-model="item.description"
+                       required ng-minlength="5" ng-maxlength="100"/>
+
+                <!-- Validation messages to be displayed on required, minlength and maxlength -->
+                <p class="help-block" ng-show="itemForm.description.$error.required">Add Description.</p>
+                <p class="help-block" ng-show="itemForm.description.$error.minlength">Description must be at least 5 characters long.</p>
+                <p class="help-block" ng-show="itemForm.description.$error.maxlength">Description cannot be longer than 100 characters.</p>
+            </div>
+
+            <div class="form-group" ng-class="{'has-error' : itemForm.done.$invalid && itemForm.done.$dirty}">
+                <label for="done">Completed:</label>
+                <!-- Display a check when the field is valid and was modified -->
+                <span ng-class="{'glyphicon glyphicon-ok' : itemForm.done.$valid && itemForm.done.$dirty}"></span>
+
+                <input id="done" name="done" type="checkbox" class="form-control"
+                       ng-model="item.done" />
+
+            </div>
+
+            <!-- Form buttons. The 'Save' button is only enabled when the form is valid. -->
+            <div class="buttons">
+                <button type="button" class="btn btn-primary" ng-click="clearForm()">Clear</button>
+                <button type="submit" class="btn btn-primary" ng-disabled="itemForm.$invalid">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="footer" ng-controller="hostController">
+From host: {{host.hostname}} / {{host.ip}}
+</div>
+</body>
+</html>
+[student@workstation todo-frontend]$ 
+[student@workstation todo-frontend]$ curl frontend-bsctlf-review-dockerfile.apps.na45.prod.nextcle.com | grep h1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  4609    0  4609    0     0  35224      0 --:--:-- --:--:-- --:--:-- 35453
+<h1>To Do List Application</h1>
+[student@workstation todo-frontend]$ lab review-dockerfile grade
+
+Grading the student's work for Lab: Designing a Container Image for OpenShift
+
+ Checking the front-end container image
+ · Local image 'todo-frontend' exists..........................  PASS
+ · Local image 'todo-frontend' has 11 or less layers...........  PASS
+
+ Checking the front-end image stream
+ · Log in on OpenShift.........................................  SUCCESS
+ · Enter project 'bsctlf-review-common'........................  PASS
+ · Secret 'quayio' exists......................................  PASS
+ · Secret 'quayio' includes authentication data for 'quay.io'..  PASS
+ · Image stream 'todo-frontend' exists.........................  PASS
+ · Image stream tag 'todo-frontend:latest' exists..............  PASS
+ · Image stream 'todo-frontend' points to student's account at 
+   Quay.io.....................................................  PASS
+ · Image stream 'todo-frontend' reference policy is 'Local'....  PASS
+
+ Checking the test deployment
+ · Enter project 'bsctlf-review-dockerfile'....................  PASS
+ · Deployment configuration 'frontend' exists in 'bsctlf-review
+   -common'....................................................  PASS
+ · Front-end deployment defines the 'BACKEND_HOST' environment 
+   variable as 'api.example.com'...............................  PASS
+ · Front-end deployment points to the 'todo-frontend' image str
+   eam from 'bsctlf-review-common'.............................  PASS
+ · Front-end pod is ready and runnning.........................  PASS
+ · Route 'frontend' exists.....................................  PASS
+ · Application returns the '<h1>To Do List Application</h1>' ti
+   tle.........................................................  PASS
+
+Overall exercise grade.........................................  PASS
+
+[student@workstation todo-frontend]$ uptime
+ 21:22:12 up 44 min,  2 users,  load average: 0.44, 0.12, 0.07
+[student@workstation todo-frontend]$ 
+
