@@ -16,8 +16,9 @@ fi
 echo "---> Installing application source..."
 #cp -Rf /tmp/src/. ./
 cp -Rf /tmp/src/. ${DOCROOT}/
-echo "Adding custom html-helloworld for cookiecutter"
-echo "assembled by cookiecutter" > ${DOCROOT}/info.html
+echo "Adding custom html-helloworld for hellokitty"
+today=$(date "+%Y-%m-%d")
+echo "assembled by hellokitty on $today" > ${DOCROOT}/info.html
 
 echo "---> Building application from source..."
 # TODO: Add build steps for your application, eg npm install, bundle install, pip install, etc.
