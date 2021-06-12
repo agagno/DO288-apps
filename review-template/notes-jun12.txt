@@ -47,3 +47,924 @@ To https://github.com/agagno/DO288-apps
    98ca657..8cdb462  review-service -> review-service
 [student@workstation DO288-apps]$ 
 
+
+[student@workstation ~]$ oc history | tail -16 > runcleaner.sh
+Error: unknown command "history" for "oc"
+Run 'oc --help' for usage.
+[student@workstation ~]$ history | tail -16 > runcleaner.sh
+[student@workstation ~]$ source /usr/local/etc/ocp4.config 
+[student@workstation ~]$ cat /usr/local/etc/ocp4.config 
+RHT_OCP4_MASTER_API=https://api.na45.prod.nextcle.com:6443
+RHT_OCP4_WILDCARD_DOMAIN=apps.na45.prod.nextcle.com
+RHT_OCP4_NEXUS_SERVER=nexus-common.apps.na45.prod.nextcle.com
+RHT_OCP4_DEV_USER=deqleq
+RHT_OCP4_DEV_PASSWORD=3b037bc9c739410980cc
+RHT_OCP4_GITHUB_USER=agagno
+RHT_OCP4_QUAY_USER=agagno
+[student@workstation ~]$ cat loginoc.sh 
+oc login -u deqleq -p 3b037bc9c739410980cc https://api.na45.prod.nextcle.com:6443
+[student@workstation ~]$ ./loginoc.sh 
+Login successful.
+
+You have access to the following projects and can switch between them with 'oc project <projectname>':
+
+    deqleq-review-common
+    deqleq-review-dockerfile
+  * deqleq-review-multicontainer
+    deqleq-review-service
+
+Using project "deqleq-review-multicontainer".
+[student@workstation ~]$ 
+[student@workstation ~]$ oc get all
+NAME                  READY   STATUS      RESTARTS   AGE
+pod/tododb-1-deploy   0/1     Completed   0          4h10m
+pod/tododb-1-glm9j    1/1     Running     0          4h10m
+
+NAME                             DESIRED   CURRENT   READY   AGE
+replicationcontroller/tododb-1   1         1         1       4h10m
+
+NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/tododb   ClusterIP   172.30.234.160   <none>        3306/TCP   4h10m
+
+NAME                                        REVISION   DESIRED   CURRENT   TRIGGERED BY
+deploymentconfig.apps.openshift.io/tododb   1          1         1         image(tododb:latest)
+
+NAME                                    IMAGE REPOSITORY                                                                                        TAGS     UPDATED
+imagestream.image.openshift.io/tododb   default-route-openshift-image-registry.apps.na45.prod.nextcle.com/deqleq-review-multicontainer/tododb   latest   4 hours ago
+[student@workstation ~]$ oc delete dc/tododb
+deploymentconfig.apps.openshift.io "tododb" deleted
+[student@workstation ~]$ oc delete is tododb
+imagestream.image.openshift.io "tododb" deleted
+[student@workstation ~]$ 
+[student@workstation ~]$ oc get all
+NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/tododb   ClusterIP   172.30.234.160   <none>        3306/TCP   4h12m
+[student@workstation ~]$ oc delete svc tododb
+service "tododb" deleted
+[student@workstation ~]$ 
+[student@workstation ~]$ oc new-app -f ./todoapp.yaml -p PASSWORD=mypass -p HOSTNAME=todoui-deqleq.apps.na45.prod.nextcle.com -p BACKEND=todoapi-deqleq.apps.na45.prod.nextcle.com -p CLEAN_DATABASE=true 
+error: unable to locate any template files with name "./todoapp.yaml"
+
+The 'oc new-app' command will match arguments to the following types:
+
+  1. Images tagged into image streams in the current project or the 'openshift' project
+     - if you don't specify a tag, we'll add ':latest'
+  2. Images in the Docker Hub, on remote registries, or on the local Docker engine
+  3. Templates in the current project or the 'openshift' project
+  4. Git repository URLs or local paths that point to Git repositories
+
+--allow-missing-images can be used to point to an image that does not exist yet.
+
+See 'oc new-app -h' for examples.
+[student@workstation ~]$ oc projects
+You have access to the following projects and can switch between them with 'oc project <projectname>':
+
+    deqleq-review-common
+    deqleq-review-dockerfile
+  * deqleq-review-multicontainer
+    deqleq-review-service
+
+Using project "deqleq-review-multicontainer" on server "https://api.na45.prod.nextcle.com:6443".
+[student@workstation ~]$ podman login -u agagno quay.io
+Password: 
+Login Succeeded!
+[student@workstation ~]$ oc get secrets
+NAME                       TYPE                                  DATA   AGE
+builder-dockercfg-9dlsw    kubernetes.io/dockercfg               1      4h27m
+builder-token-flzxg        kubernetes.io/service-account-token   4      4h27m
+builder-token-hn4ls        kubernetes.io/service-account-token   4      4h27m
+default-dockercfg-5t7xk    kubernetes.io/dockercfg               1      4h27m
+default-token-djdpz        kubernetes.io/service-account-token   4      4h27m
+default-token-r4qt6        kubernetes.io/service-account-token   4      4h27m
+deployer-dockercfg-lf4s2   kubernetes.io/dockercfg               1      4h27m
+deployer-token-2mfpz       kubernetes.io/service-account-token   4      4h27m
+deployer-token-td724       kubernetes.io/service-account-token   4      4h27m
+[student@workstation ~]$ oc get all
+No resources found in deqleq-review-multicontainer namespace.
+[student@workstation ~]$ 
+[student@workstation ~]$ ls
+Desktop            Documents   nexus-template.yaml  runcleaner.sh
+DO288              Downloads   Pictures             Templates
+DO288-apps         loginoc.sh  Public               tododb-micro
+Dockerfile.nexus3  Music       review-template      Videos
+[student@workstation ~]$ cd review-template/
+[student@workstation review-template]$ ls -l
+total 28
+-rw-rw-r--. 1 student student 11740 Jun 12 11:48 sample.yaml
+-rw-r--r--. 1 student student  9910 Jun 12 12:29 todoapp.yaml
+-rw-r--r--. 1 student student   873 Jun 12 11:53 todo.sql
+[student@workstation review-template]$ oc new-app -f ./todoapp.yaml -p PASSWORD=mypass -p HOSTNAME=todoui-deqleq.apps.na45.prod.nextcle.com -p BACKEND=todoapi-deqleq.apps.na45.prod.nextcle.com -p CLEAN_DATABASE=true 
+--> Deploying template "deqleq-review-multicontainer/todoapp" for "./todoapp.yaml" to project deqleq-review-multicontainer
+
+     * With parameters:
+        * MySQL server container image full name (with registry)=registry.access.redhat.com/rhscl/mysql-57-rhel7
+        * To Do List back-end Git repository URL=https://github.com/agagno/DO288-apps
+        * To Do List back-end project root folder=todo-backend
+        * Git branch to build the To Do List back-end=master
+        * Npm modules repository URL=http://nexus-common.apps.na45.prod.nextcle.com/repository/nodejs
+        * Secret for webhooks=JwGfO68QUExLGw3wjbwDcaLXRAvTfrHMv6r5aVRV # generated
+        * MySQL database password for the todoapp user=mypass
+        * Host name to acccess the To Do List front-end web application=todoui-deqleq.apps.na45.prod.nextcle.com
+        * Host name to acccess the To Do List back-end HTTP API=todoapi-deqleq.apps.na45.prod.nextcle.com
+        * Initialize database=true
+
+--> Creating resources ...
+    imagestream.image.openshift.io "backend" created
+    imagestream.image.openshift.io "tododb" created
+    configmap "todoapp" created
+    secret "tododb" created
+    buildconfig.build.openshift.io "backend" created
+    deploymentconfig.apps.openshift.io "backend" created
+    deploymentconfig.apps.openshift.io "tododb" created
+    service "backend" created
+    service "tododb" created
+    route.route.openshift.io "backend" created
+    deploymentconfig.apps.openshift.io "frontend" created
+    service "frontend" created
+    route.route.openshift.io "frontend" created
+--> Success
+    Build scheduled, use 'oc logs -f bc/backend' to track its progress.
+    Access your application via route 'todoapi-deqleq.apps.na45.prod.nextcle.com' 
+    Access your application via route 'todoui-deqleq.apps.na45.prod.nextcle.com' 
+    Run 'oc status' to view your app.
+[student@workstation review-template]$ 
+[student@workstation review-template]$ oc get secrets
+NAME                       TYPE                                  DATA   AGE
+builder-dockercfg-9dlsw    kubernetes.io/dockercfg               1      4h29m
+builder-token-flzxg        kubernetes.io/service-account-token   4      4h29m
+builder-token-hn4ls        kubernetes.io/service-account-token   4      4h29m
+default-dockercfg-5t7xk    kubernetes.io/dockercfg               1      4h29m
+default-token-djdpz        kubernetes.io/service-account-token   4      4h29m
+default-token-r4qt6        kubernetes.io/service-account-token   4      4h29m
+deployer-dockercfg-lf4s2   kubernetes.io/dockercfg               1      4h29m
+deployer-token-2mfpz       kubernetes.io/service-account-token   4      4h29m
+deployer-token-td724       kubernetes.io/service-account-token   4      4h29m
+tododb                     Opaque                                2      12s
+[student@workstation review-template]$ oc describe secret tododb
+Name:         tododb
+Namespace:    deqleq-review-multicontainer
+Labels:       <none>
+Annotations:  openshift.io/generated-by: OpenShiftNewApp
+
+Type:  Opaque
+
+Data
+====
+password:  6 bytes
+user:      7 bytes
+[student@workstation review-template]$ oc get pods
+NAME                READY   STATUS      RESTARTS   AGE
+backend-1-build     1/1     Running     0          30s
+frontend-1-deploy   0/1     Completed   0          30s
+frontend-1-ghrjp    1/1     Running     0          27s
+tododb-1-9rl8w      1/1     Running     0          27s
+tododb-1-deploy     0/1     Completed   0          29s
+[student@workstation review-template]$ oc rsh tododb-1-9rl8w 
+sh-4.2$ env | grep MYSQL
+MYSQL_PREFIX=/opt/rh/rh-mysql57/root/usr
+MYSQL_VERSION=5.7
+MYSQL_DATABASE=todo
+MYSQL_PASSWORD=mypass
+MYSQL_USER=todoapp
+sh-4.2$ exit
+[student@workstation review-template]$ cat todo.sql
+
+DROP TABLE IF EXISTS `Item`;
+CREATE TABLE IF NOT EXISTS `Item` (id BIGINT NOT NULL auto_increment UNIQUE , description VARCHAR(255), done TINYINT(1), PRIMARY KEY (id)) ENGINE=InnoDB;
+
+INSERT INTO `Item` (id, description, done) VALUES (DEFAULT, 'Populate external database', true);
+INSERT INTO `Item` (id, description, done) VALUES (DEFAULT, 'Create project in OpenShift', true);
+INSERT INTO `Item` (id, description, done) VALUES (DEFAULT, 'Deploy To Do List application in OpenShift', true);
+INSERT INTO `Item` (id, description, done) VALUES (DEFAULT, 'Create service that will point to external database', false);
+INSERT INTO `Item` (id, description, done) VALUES (DEFAULT, 'Add endpoint to service that points to the external database server', false);
+INSERT INTO `Item` (id, description, done) VALUES (DEFAULT, 'Verify that the To Do List application works', false);
+
+
+[student@workstation review-template]$ oc get pods
+NAME                READY   STATUS      RESTARTS   AGE
+backend-1-build     0/1     Completed   0          6m9s
+backend-1-deploy    0/1     Completed   0          5m31s
+backend-1-jgpt7     1/1     Running     0          5m29s
+frontend-1-deploy   0/1     Completed   0          6m9s
+frontend-1-ghrjp    1/1     Running     0          6m6s
+tododb-1-9rl8w      1/1     Running     0          6m6s
+tododb-1-deploy     0/1     Completed   0          6m8s
+[student@workstation review-template]$ curl -si todoapi-youruser.apps.cluster.domain.example.com/todo/api/items-count
+[student@workstation review-template]$ oc get routes
+NAME       HOST/PORT                                   PATH   SERVICES   PORT       TERMINATION   WILDCARD
+backend    todoapi-deqleq.apps.na45.prod.nextcle.com          backend    8080-tcp                 None
+frontend   todoui-deqleq.apps.na45.prod.nextcle.com           frontend   8080-tcp                 None
+[student@workstation review-template]$ curl -si todoapi-deqleq.apps.na45.prod.nextcle.com/todo/api/items-count
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 11
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+Access-Control-Allow-Methods: GET
+Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+Content-MD5: dqssH6hRHxnwX+rMCPtPgw==
+Date: Sat, 12 Jun 2021 21:00:15 GMT
+Server: restify
+Request-Id: f0ee13bd-3d67-4170-a20c-2b53aee39714
+Response-Time: 3
+Set-Cookie: 7a45393d352b1d1537bf97fe4dfcbc1a=3b2719babdff645787feb7af423f5e3a; path=/; HttpOnly
+Cache-control: private
+
+{"count":0}[student@workstation review-template]$ 
+[student@workstation review-template]$ 
+[student@workstation review-template]$ cat ../runcleaner.sh 
+oc delete is backend
+delete is frontend
+oc delete cm todoapp
+oc delete secret tododb
+oc delete bc/backend
+oc delete dc/backend
+oc delete dc/frontend
+oc delete dc/frontend
+oc delete dc/tododb
+oc delete svc/tododb
+oc delete is tododb
+oc delete svc/backend
+oc delete svc/frontend
+oc delete route/backend
+oc delete route/frontend 
+oc get all
+
+[student@workstation review-template]$ oc get all
+NAME                    READY   STATUS      RESTARTS   AGE
+pod/backend-1-build     0/1     Completed   0          7m20s
+pod/backend-1-deploy    0/1     Completed   0          6m42s
+pod/backend-1-jgpt7     1/1     Running     0          6m40s
+pod/frontend-1-deploy   0/1     Completed   0          7m20s
+pod/frontend-1-ghrjp    1/1     Running     0          7m17s
+pod/tododb-1-9rl8w      1/1     Running     0          7m17s
+pod/tododb-1-deploy     0/1     Completed   0          7m19s
+
+NAME                               DESIRED   CURRENT   READY   AGE
+replicationcontroller/backend-1    1         1         1       6m42s
+replicationcontroller/frontend-1   1         1         1       7m20s
+replicationcontroller/tododb-1     1         1         1       7m19s
+
+NAME               TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/backend    ClusterIP   172.30.113.96   <none>        8080/TCP   7m20s
+service/frontend   ClusterIP   172.30.39.206   <none>        8080/TCP   7m20s
+service/tododb     ClusterIP   172.30.67.145   <none>        3306/TCP   7m20s
+
+NAME                                          REVISION   DESIRED   CURRENT   TRIGGERED BY
+deploymentconfig.apps.openshift.io/backend    1          1         1         image(backend:latest)
+deploymentconfig.apps.openshift.io/frontend   1          1         1         config,image(todo-frontend:latest)
+deploymentconfig.apps.openshift.io/tododb     1          1         1         image(tododb:latest)
+
+NAME                                     TYPE     FROM         LATEST
+buildconfig.build.openshift.io/backend   Source   Git@master   1
+
+NAME                                 TYPE     FROM          STATUS     STARTED         DURATION
+build.build.openshift.io/backend-1   Source   Git@20d7733   Complete   7 minutes ago   38s
+
+NAME                                     IMAGE REPOSITORY                                                                                         TAGS     UPDATED
+imagestream.image.openshift.io/backend   default-route-openshift-image-registry.apps.na45.prod.nextcle.com/deqleq-review-multicontainer/backend   latest   6 minutes ago
+imagestream.image.openshift.io/tododb    default-route-openshift-image-registry.apps.na45.prod.nextcle.com/deqleq-review-multicontainer/tododb    latest   7 minutes ago
+
+NAME                                HOST/PORT                                   PATH   SERVICES   PORT       TERMINATION   WILDCARD
+route.route.openshift.io/backend    todoapi-deqleq.apps.na45.prod.nextcle.com          backend    8080-tcp                 None
+route.route.openshift.io/frontend   todoui-deqleq.apps.na45.prod.nextcle.com           frontend   8080-tcp                 None
+[student@workstation review-template]$ oc get pods
+NAME                READY   STATUS      RESTARTS   AGE
+backend-1-build     0/1     Completed   0          7m27s
+backend-1-deploy    0/1     Completed   0          6m49s
+backend-1-jgpt7     1/1     Running     0          6m47s
+frontend-1-deploy   0/1     Completed   0          7m27s
+frontend-1-ghrjp    1/1     Running     0          7m24s
+tododb-1-9rl8w      1/1     Running     0          7m24s
+tododb-1-deploy     0/1     Completed   0          7m26s
+[student@workstation review-template]$ ls ..
+Desktop            Documents   nexus-template.yaml  runcleaner.sh
+DO288              Downloads   Pictures             Templates
+DO288-apps         loginoc.sh  Public               tododb-micro
+Dockerfile.nexus3  Music       review-template      Videos
+[student@workstation review-template]$ chmod 750 ../runcleaner.sh 
+[student@workstation review-template]$  ../runcleaner.sh 
+imagestream.image.openshift.io "backend" deleted
+../runcleaner.sh: line 2: delete: command not found
+configmap "todoapp" deleted
+secret "tododb" deleted
+buildconfig.build.openshift.io "backend" deleted
+deploymentconfig.apps.openshift.io "backend" deleted
+deploymentconfig.apps.openshift.io "frontend" deleted
+Error from server (NotFound): deploymentconfigs.apps.openshift.io "frontend" not found
+deploymentconfig.apps.openshift.io "tododb" deleted
+service "tododb" deleted
+imagestream.image.openshift.io "tododb" deleted
+service "backend" deleted
+service "frontend" deleted
+route.route.openshift.io "backend" deleted
+route.route.openshift.io "frontend" deleted
+NAME                 READY   STATUS        RESTARTS   AGE
+pod/tododb-1-9rl8w   1/1     Terminating   0          8m6s
+[student@workstation review-template]$ 
+[student@workstation review-template]$ 
+[student@workstation review-template]$ oc get all
+No resources found in deqleq-review-multicontainer namespace.
+[student@workstation review-template]$ 
+[student@workstation review-template]$ oc new-app -f ./todoapp.yaml -p PASSWORD=redhat  -p HOSTNAME=todoui-deqleq.apps.na45.prod.nextcle.com -p BACKEND=todoapi-deqleq.apps.na45.prod.nextcle.com -p CLEAN_DATABASE=true 
+--> Deploying template "deqleq-review-multicontainer/todoapp" for "./todoapp.yaml" to project deqleq-review-multicontainer
+
+     * With parameters:
+        * MySQL server container image full name (with registry)=registry.access.redhat.com/rhscl/mysql-57-rhel7
+        * To Do List back-end Git repository URL=https://github.com/agagno/DO288-apps
+        * To Do List back-end project root folder=todo-backend
+        * Git branch to build the To Do List back-end=master
+        * Npm modules repository URL=http://nexus-common.apps.na45.prod.nextcle.com/repository/nodejs
+        * Secret for webhooks=IUayOKuhETbcuXyLc7Km45Ly8oJ451cddwDhsYBM # generated
+        * MySQL database password for the todoapp user=redhat
+        * Host name to acccess the To Do List front-end web application=todoui-deqleq.apps.na45.prod.nextcle.com
+        * Host name to acccess the To Do List back-end HTTP API=todoapi-deqleq.apps.na45.prod.nextcle.com
+        * Initialize database=true
+
+--> Creating resources ...
+    imagestream.image.openshift.io "backend" created
+    imagestream.image.openshift.io "tododb" created
+    configmap "todoapp" created
+    secret "tododb" created
+    buildconfig.build.openshift.io "backend" created
+    deploymentconfig.apps.openshift.io "backend" created
+    deploymentconfig.apps.openshift.io "tododb" created
+    service "backend" created
+    service "tododb" created
+    route.route.openshift.io "backend" created
+    deploymentconfig.apps.openshift.io "frontend" created
+    service "frontend" created
+    route.route.openshift.io "frontend" created
+--> Success
+    Build scheduled, use 'oc logs -f bc/backend' to track its progress.
+    Access your application via route 'todoapi-deqleq.apps.na45.prod.nextcle.com' 
+    Access your application via route 'todoui-deqleq.apps.na45.prod.nextcle.com' 
+    Run 'oc status' to view your app.
+[student@workstation review-template]$ 
+[student@workstation review-template]$ oc get pods
+NAME                READY   STATUS      RESTARTS   AGE
+backend-1-build     1/1     Running     0          22s
+frontend-1-deploy   0/1     Completed   0          22s
+frontend-1-qvf6z    1/1     Running     0          20s
+tododb-1-deploy     0/1     Completed   0          22s
+tododb-1-hx5v8      1/1     Running     0          20s
+[student@workstation review-template]$ oc get secrets
+NAME                       TYPE                                  DATA   AGE
+builder-dockercfg-9dlsw    kubernetes.io/dockercfg               1      4h39m
+builder-token-flzxg        kubernetes.io/service-account-token   4      4h39m
+builder-token-hn4ls        kubernetes.io/service-account-token   4      4h39m
+default-dockercfg-5t7xk    kubernetes.io/dockercfg               1      4h39m
+default-token-djdpz        kubernetes.io/service-account-token   4      4h39m
+default-token-r4qt6        kubernetes.io/service-account-token   4      4h39m
+deployer-dockercfg-lf4s2   kubernetes.io/dockercfg               1      4h39m
+deployer-token-2mfpz       kubernetes.io/service-account-token   4      4h39m
+deployer-token-td724       kubernetes.io/service-account-token   4      4h39m
+tododb                     Opaque                                2      41s
+[student@workstation review-template]$ oc describe secret tododb
+Name:         tododb
+Namespace:    deqleq-review-multicontainer
+Labels:       <none>
+Annotations:  openshift.io/generated-by: OpenShiftNewApp
+
+Type:  Opaque
+
+Data
+====
+password:  6 bytes
+user:      7 bytes
+[student@workstation review-template]$ 
+[student@workstation review-template]$ oc describe cm todoapp
+Name:         todoapp
+Namespace:    deqleq-review-multicontainer
+Labels:       <none>
+Annotations:  openshift.io/generated-by: OpenShiftNewApp
+
+Data
+====
+init:
+----
+true
+Events:  <none>
+[student@workstation review-template]$ 
+[student@workstation review-template]$ curl -si todoapi-deqleq.apps.na45.prod.nextcle.com/todo/api/items-count
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 11
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+Access-Control-Allow-Methods: GET
+Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+Content-MD5: dqssH6hRHxnwX+rMCPtPgw==
+Date: Sat, 12 Jun 2021 21:04:40 GMT
+Server: restify
+Request-Id: 5c8b5099-19a8-46f1-9a60-0ed41db99773
+Response-Time: 2
+Set-Cookie: 7a45393d352b1d1537bf97fe4dfcbc1a=eb9221dda07e215956b3e295a3473b07; path=/; HttpOnly
+Cache-control: private
+
+{"count":0}[student@workstation review-template]$ 
+[student@workstation review-template]$ 
+[student@workstation review-template]$ 
+[student@workstation review-template]$ oc get pods
+NAME                READY   STATUS      RESTARTS   AGE
+backend-1-build     0/1     Completed   0          3m3s
+backend-1-deploy    0/1     Completed   0          2m24s
+backend-1-m2lhg     1/1     Running     0          2m22s
+frontend-1-deploy   0/1     Completed   0          3m3s
+frontend-1-qvf6z    1/1     Running     0          3m1s
+tododb-1-deploy     0/1     Completed   0          3m3s
+tododb-1-hx5v8      1/1     Running     0          3m1s
+[student@workstation review-template]$ mysql -h 127.0.0.1 -P30306 -utodoapp -predhat todo < todo.sql
+[student@workstation review-template]$ 
+[student@workstation review-template]$ curl -si todoapi-deqleq.apps.na45.prod.nextcle.com/todo/api/items-count
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 11
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, Api-Version, Response-Time
+Access-Control-Allow-Methods: GET
+Access-Control-Expose-Headers: Api-Version, Request-Id, Response-Time
+Content-MD5: AJONpkpz3+cwUFhvK2tqjg==
+Date: Sat, 12 Jun 2021 21:07:40 GMT
+Server: restify
+Request-Id: 01bea911-cc6b-40d9-a3f3-08c13ecd758d
+Response-Time: 3
+Set-Cookie: 7a45393d352b1d1537bf97fe4dfcbc1a=eb9221dda07e215956b3e295a3473b07; path=/; HttpOnly
+Cache-control: private
+
+{"count":6}[student@workstation review-template]$ 
+[student@workstation review-template]$ 
+[student@workstation review-template]$ lab review-multicontainer grade
+
+Grading the student's work for Lab: Building and Deploying a Multi-container Application
+
+ Checking the To Do List multiconainer application template
+ · Log in on OpenShift.........................................  SUCCESS
+ · Enter project 'deqleq-review-common'........................  SUCCESS
+ · Template resource 'todoapp' exists..........................  PASS
+ · Template defines 10 parameters..............................  PASS
+ · Parameter 'SECRET' is randomly generated....................  PASS
+ · Parameter 'CLEAN_DATABASE' has default value of 'false'.....  PASS
+ · Secret key references the 'PASSWORD' parameter..............  PASS
+ · ConfigMap key references the 'CLEAN_DATABASE' parameter.....  PASS
+ · Front-end pod references the 'BACKEND' parameter............  PASS
+ · Back-end route references the 'BACKEND' parameter...........  PASS
+ · Front-end route references the 'HOSTNAME' parameter.........  FAIL
+ · Back-end deployment configuration defines a liveness probe t
+   hat points to '/todo/api/items-count'.......................  PASS
+ · Back-end deployment configuration defines a readiness probe 
+   that points to '/todo/api/host'.............................  PASS
+
+ Checking the database deployment
+ · Enter project 'deqleq-review-multicontainer'................  PASS
+ · Database pod is ready and runnning..........................  PASS
+
+ Checking the front-end deployment
+ · Front-end pod is ready and runnning.........................  PASS
+ · Route 'frontend' exists.....................................  PASS
+ · Front-end welcome page is available.........................  PASS
+ · Front-end welcome page returns the expected title...........  PASS
+
+ Checking the back-end deployment
+ · Build configuration points to correct git repo, branch, and 
+   context dir.................................................  PASS
+ · Back-end build was successful...............................  PASS
+ · Back-end pod is ready and runnning..........................  PASS
+ · Route 'backend' exists......................................  PASS
+ · Back-end HTTP API page is available.........................  PASS
+ · Back-end HTTP API returns six items.........................  PASS
+
+Overall exercise grade.........................................  FAIL
+
+[student@workstation review-template]$ cat todoapp.yaml 
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: todoapp
+objects:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+    labels:
+      app: backend
+    name: backend
+  spec:
+    lookupPolicy:
+      local: false
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+    labels:
+      app: tododb
+    name: tododb
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+    - annotations:
+      from:
+        kind: DockerImage
+        name: ${DATABASE_IMAGE}
+      name: latest
+      referencePolicy:
+        type: Source
+- apiVersion: v1
+  data:
+    init: ${CLEAN_DATABASE}
+  kind: ConfigMap
+  metadata:
+    name: todoapp
+- apiVersion: v1
+  stringData:
+    password: ${PASSWORD}
+    user: todoapp
+  kind: Secret
+  metadata:
+    name: tododb
+  type: Opaque
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+    labels:
+      app: backend
+    name: backend
+  spec:
+    failedBuildsHistoryLimit: 5
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: backend:latest
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      contextDir: ${BACK_END_CTXDIR}
+      git:
+        ref: ${BACK_END_BRANCH}
+        uri: ${BACK_END_REPO}
+      type: Git
+    strategy:
+      sourceStrategy:
+        env:
+        - name: npm_config_registry
+          value: ${NPM_PROXY}
+        from:
+          kind: ImageStreamTag
+          name: nodejs:12
+          namespace: openshift
+      type: Source
+    successfulBuildsHistoryLimit: 5
+    triggers:
+    - github:
+        secret: ${SECRET}
+      type: GitHub
+    - generic:
+        secret: ${SECRET}
+      type: Generic
+    - type: ConfigChange
+    - imageChange: {}
+      type: ImageChange
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+    labels:
+      app: backend
+    name: backend
+  spec:
+    replicas: 1
+    selector:
+      app: backend
+      deploymentconfig: backend
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+        labels:
+          app: backend
+          deploymentconfig: backend
+      spec:
+        containers:
+        - env:
+          - name: DATABASE_NAME
+            value: todo
+          - name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: tododb
+          - name: DATABASE_SVC
+            value: tododb
+          - name: DATABASE_USER
+            valueFrom:
+              secretKeyRef:
+                key: user
+                name: tododb
+          - name: DATABASE_INIT
+            valueFrom:
+              configMapKeyRef:
+                key: init
+                name: todoapp
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /todo/api/items-count
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /todo/api/host
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+          name: backend
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - backend
+        from:
+          kind: ImageStreamTag
+          name: backend:latest
+      type: ImageChange
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+    labels:
+      app: tododb
+    name: tododb
+  spec:
+    replicas: 1
+    selector:
+      app: tododb
+      deploymentconfig: tododb
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+        labels:
+          app: tododb
+          deploymentconfig: tododb
+      spec:
+        containers:
+        - env:
+          - name: MYSQL_DATABASE
+            value: todo
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: tododb
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                key: user
+                name: tododb
+          imagePullPolicy: Always
+          name: tododb
+          ports:
+          - containerPort: 3306
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /var/lib/mysql/data
+            name: tododb-volume-1
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: tododb-volume-1
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - tododb
+        from:
+          kind: ImageStreamTag
+          name: tododb:latest
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+    labels:
+      app: backend
+    name: backend
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: backend
+      deploymentconfig: backend
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+    labels:
+      app: tododb
+    name: tododb
+  spec:
+    ports:
+    - name: 3306-tcp
+      port: 3306
+      protocol: TCP
+      targetPort: 3306
+    selector:
+      app: tododb
+      deploymentconfig: tododb
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    labels:
+      app: backend
+    name: backend
+  spec:
+    host: ${BACKEND}
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: backend
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+    labels:
+      app: frontend
+    name: frontend
+  spec:
+    replicas: 1
+    selector:
+      app: frontend
+      deploymentconfig: frontend
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+        labels:
+          app: frontend
+          deploymentconfig: frontend
+      spec:
+        containers:
+        - env:
+          - name: BACKEND_HOST
+            value: ${BACKEND}
+          imagePullPolicy: Always
+          name: frontend
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - frontend
+        from:
+          kind: ImageStreamTag
+          name: todo-frontend:latest
+          namespace: deqleq-review-common
+      type: ImageChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+    labels:
+      app: frontend
+    name: frontend
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: frontend
+      deploymentconfig: frontend
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    labels:
+      app: frontend
+    name: frontend
+  spec:
+    host: ${HOSTNAME}
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: frontend
+      weight: 100
+    wildcardPolicy: None
+parameters:
+- displayName: MySQL server container image full name (with registry)
+  name: DATABASE_IMAGE
+  required: true
+  value: registry.access.redhat.com/rhscl/mysql-57-rhel7
+- displayName: To Do List back-end Git repository URL
+  name: BACK_END_REPO
+  required: true
+  value: https://github.com/agagno/DO288-apps
+- displayName: To Do List back-end project root folder
+  name: BACK_END_CTXDIR
+  required: true
+  value: todo-backend
+- displayName: Git branch to build the To Do List back-end
+  name: BACK_END_BRANCH
+  required: true
+  value: master
+- displayName: Npm modules repository URL
+  name: NPM_PROXY
+  required: true
+  value: http://nexus-common.apps.na45.prod.nextcle.com/repository/nodejs
+- displayName: Secret for webhooks
+  name: SECRET
+  required: true
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+- displayName: MySQL database password for the todoapp user
+  name: PASSWORD
+  required: true
+- displayName: Host name to acccess the To Do List front-end web application
+  name: HOSTNAME
+  required: true
+- displayName: Host name to acccess the To Do List back-end HTTP API
+  name: BACKEND
+  required: true
+- displayName: Initialize database
+  name: CLEAN_DATABASE
+  value: "false"
+
+[student@workstation review-template]$ 
+
