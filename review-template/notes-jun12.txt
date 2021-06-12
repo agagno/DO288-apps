@@ -1,0 +1,49 @@
+[student@workstation review-template]$ oc port-forward tododb-1-hx5v8 30306:3306
+Forwarding from 127.0.0.1:30306 -> 3306
+Forwarding from [::1]:30306 -> 3306
+Handling connection for 30306
+^C[student@workstation review-template]$ 
+[student@workstation review-template]$ pwd
+/home/student/review-template
+[student@workstation review-template]$ git status
+fatal: Not a git repository (or any of the parent directories): .git
+[student@workstation review-template]$ cd ../DO288-apps/
+[student@workstation DO288-apps]$ git status
+# On branch review-service
+nothing to commit, working directory clean
+[student@workstation DO288-apps]$ ls -l review-template/
+total 36
+-rwxr-x---. 1 student student    82 Jun 12 07:57 loginoc.sh
+-rwxr-x---. 1 student student   339 Jun 12 16:48 runcleaner.sh
+-rw-rw-r--. 1 student student 11740 Jun 12 11:48 sample.yaml
+-rw-r--r--. 1 student student  9910 Jun 12 12:29 todoapp.yaml
+-rw-r--r--. 1 student student   873 Jun 12 11:53 todo.sql
+[student@workstation DO288-apps]$ git status
+# On branch review-service
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	review-template/
+nothing added to commit but untracked files present (use "git add" to track)
+[student@workstation DO288-apps]$ git add review-template/
+[student@workstation DO288-apps]$ git commit -am "review todo template"
+[review-service 8cdb462] review todo template
+ 5 files changed, 848 insertions(+)
+ create mode 100755 review-template/loginoc.sh
+ create mode 100755 review-template/runcleaner.sh
+ create mode 100644 review-template/sample.yaml
+ create mode 100644 review-template/todo.sql
+ create mode 100644 review-template/todoapp.yaml
+[student@workstation DO288-apps]$ git push
+Username for 'https://github.com': agagno
+Password for 'https://agagno@github.com': 
+Counting objects: 9, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (8/8), done.
+Writing objects: 100% (8/8), 5.83 KiB | 0 bytes/s, done.
+Total 8 (delta 1), reused 0 (delta 0)
+remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+To https://github.com/agagno/DO288-apps
+   98ca657..8cdb462  review-service -> review-service
+[student@workstation DO288-apps]$ 
+
